@@ -18,7 +18,7 @@ urlcolor: blue
 
 # Names of the group members and their course.
 
-* Chidi Agabaeruneke (Stat 613)
+* Chidi Agbaeruneke (Stat 613)
 * Corey Hutton (Stat 613)
 * Ifebunandu Okeke (Stat 613)
 * Umeadim Okwudishu (Stat 613)
@@ -29,7 +29,8 @@ urlcolor: blue
 
 # Proposed data sorces.
 
-* 
+* CDC or DC Open Data
+* Data collection method: APIs
 
 # Concept for the Shiny App
 
