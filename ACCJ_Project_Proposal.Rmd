@@ -67,7 +67,7 @@ urlcolor: blue
 
 * Chidi Agabaeruneke *researcher & analyst*
 * Corey Hutton *researcher & analyst*
-* Ifebunandu Okeke *researcher & analyst*
+* Ifebunandu Jerome Okeke *researcher & analyst*
 * Umeadim Okwudishu *researcher & analyst*
 
 # Initial questions of interest
