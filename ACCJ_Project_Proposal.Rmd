@@ -25,7 +25,7 @@ urlcolor: blue
 
 # Description of the problem to be analyzed in the Shiny App
 
-* 
+* COVID-19, caused by a coronavirus called SARS-CoV-2, is a pandemic that has led to the global instability of economies, governments, and life as we once knew. Its pervasiveness, exceptional rate of transmissibility, and virulence are key aspects of why this virus has led to unprecedented levels of fatalities and global disruption of everyday life. COVID-19 has left an indelible impact on the world, having entered the top ten of world’s worst pandemics, totaling over 2.7 million deaths worldwide. A phenomenon of this scale necessitates constant surveillance and data analysis to mitigate further fatalities. To that end, a COVID-19 Informational Shiny App could synthesize the troves of data surrounding this pandemic and inform users of dispersion across geographic areas, project future mortality rates, track daily caseloads, among additional functionalities. 
 
 # Proposed data sorces.
 
@@ -78,7 +78,7 @@ urlcolor: blue
   * Choose data source and collection method.
   * Collect the data.
   * Compile references for literature review.
-    * One person group member.
+    * One per group member.
   * Data exploration.
   * Brainstorm and outline Use Case for the Shiny App.
   * Establish project repo on GitHub.
@@ -87,6 +87,8 @@ urlcolor: blue
 
   * Each member drafts write-up for respective reference for the literature review.
   * Begin development on the COVID Informational Shiny App.
+  * Meet with Professor Ressler.
+    * Determine availability.
   
 * Week 3 (3/31)
 
