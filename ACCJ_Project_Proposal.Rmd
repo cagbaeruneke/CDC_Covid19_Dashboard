@@ -36,15 +36,31 @@ urlcolor: blue
 
 ## Overall Layout
 
-* 
+* 4 tabs
+  * Time-series trends.
+  * Dispersion across geographic areas.
+  * Allocation of financial resources to medical institutions juxtaposed against cases and mortality rates.
+  * Case load by demographic features.
+    * Race
+    * Ethnicity
+    * Socioeconomic factors
 
 ## Data Analysis and Visualization with User Choices and Results
 
-* 
+* EDA of predictors and outcome variable(s)
+* Potential Predictors
+  * 
+* Outcome Variable(s)
+  * Deaths
+  * Recovered patients.
 
 ## Statistical Modeling with User Choices and Results
 
-* 
+* Mortality rate projection based on time-series data.
+  * Date
+  *
+* Case load projections.
+  * 
 
 # Allocation of Responsibilities for the team
 
