@@ -25,14 +25,31 @@ urlcolor: blue
 
 # Description of the problem to be analyzed in the Shiny App
 
-* COVID-19, caused by a coronavirus called SARS-CoV-2, is a pandemic that has led to the global instability of economies, governments, and life as we once knew. Its pervasiveness, exceptional rate of transmisibility, and virulence are key aspects of why this virus has led to unprecedented levels of fatalities and global disruption of everyday life. COVID-19 has left an indelible impact on the world, having entered the top ten of worlds worst pandemics, totaling over 2.7 million deaths worldwide. A phenomenon of this scale necessitates constant surveillance and data analysis to mitigate further fatalities. To that end, a COVID-19 Informational Shiny App could synthesize the troves of data surrounding this pandemic and inform users of dispersion across geographic areas, project future mortality rates, track daily caseloads, among additional functionality. 
+* COVID-19, caused by a coronavirus called SARS-CoV-2, is a pandemic that has led to the global instability of economies, governments, and life as we once knew. Its pervasiveness, exceptional rate of transmission, and virulence are key aspects of why this virus has led to unprecedented levels of fatalities and global disruption of everyday life. COVID-19 has left an indelible impact on the world, having entered the top ten of worlds worst pandemics, totaling over 2.7 million deaths worldwide. A phenomenon of this scale necessitates constant surveillance and data analysis to mitigate further fatalities. To that end, a COVID-19 Informational Shiny App could synthesize the troves of data surrounding this pandemic and inform users of dispersion across geographic areas, project future mortality rates, track daily caseloads, among additional functionality. 
 
-# Proposed data sorces.
+With the US battling the effects of COVID and the numerous phases the pandemic has been through, there are a lot of individuals who would like access to COVID information and other pertinent facts that may affect them as individuals, their families and even their communities. Information being disseminated about COVID via news outlets and other social media are either too complex for the average individual to digest or marred with socio-political sentiment that could potential skew the information with bias.
 
-* CDC or DC Open Data
-* Data collection method: APIs
+The purpose of this app is provide available COVID information and present in a simple way that offers users concise and valuable answers to every day questions related their safety
+
+
+# Proposed data sources.
+
+* Centers for Disease Control and Prevention (CDC). Data.CDC.gov is a repository of all available data sets with a Socrata Open Data API. We will be using the listed API endpoints, documentation, architecture and available for formats to access the data for the informational Shiny App
+
+* Open Data DC is a District of Columbia government repository designed to share hundreds of datasets and encourages the public to analyze and/or build apps with this data using their listed APIs.
+
 
 # Concept for the Shiny App
+
+## Basic Use Case Description
+  1. Actors - Users, Personal Devices, Data Sources, Internet
+  2. Goal - The user will access COVID information through the use of a personal device with access to the internet
+  3. Pre-conditions - Access to a personal device and internet
+  4. Post-conditions - None
+  5. Primary Flow - User opens up device, accesses Shiny app link and makes specific selections of available tabs and drop downs
+  6. Exceptions - If specific more information is require, the app can link them to the data sources via available hyperlinks
+  7. Alternative Flow - TBD
+  
 
 ## Overall Layout
 
@@ -44,6 +61,7 @@ urlcolor: blue
     * Race
     * Ethnicity
     * Socioeconomic factors
+  * Vaccine Distribution
 
 ## Data Analysis and Visualization with User Choices and Results
 
