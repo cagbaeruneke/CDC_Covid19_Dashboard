@@ -84,6 +84,7 @@ The purpose of this app is provide available COVID information and present in a 
   * Date
   *
 * Case load projections.
+
   * 
 * Statistical comparison between two states/counties
   * Something like: "a person living in Iowa has an __% higher chance of recovering from COVID than a person living in Nebraska"
