@@ -1,0 +1,141 @@
+---
+title: "Final Project Proposal"
+author: "Group4: ACCJ"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 1
+    number_sections: yes
+urlcolor: blue
+---
+
+\newpage
+
+# App Title
+
+* COVID-19 Informational Shiny App
+
+# Names of the group members and their course.
+
+* Chidi Agbaeruneke (Stat 613)
+* Corey Hutton (Stat 613)
+* Ifebunandu Okeke (Stat 613)
+* Umeadim Okwudishu (Stat 613)
+
+# Description of the problem to be analyzed in the Shiny App
+
+* COVID-19, caused by a coronavirus called SARS-CoV-2, is a pandemic that has led to the global instability of economies, governments, and life as we once knew. Its pervasiveness, exceptional rate of transmissibility, and virulence are key aspects of why this virus has led to unprecedented levels of fatalities and global disruption of everyday life. COVID-19 has left an indelible impact on the world, having entered the top ten of world’s worst pandemics, totaling over 2.7 million deaths worldwide. A phenomenon of this scale necessitates constant surveillance and data analysis to mitigate further fatalities. To that end, a COVID-19 Informational Shiny App could synthesize the troves of data surrounding this pandemic and inform users of dispersion across geographic areas, project future mortality rates, track daily caseloads, among additional functionalities. 
+
+# Proposed data sorces.
+
+* CDC or DC Open Data
+* Data collection method: APIs
+
+# Concept for the Shiny App
+
+## Overall Layout
+
+* 4 tabs
+  * Time-series trends.
+  * Dispersion across geographic areas.
+  * Allocation of financial resources to medical institutions juxtaposed against cases and mortality rates.
+  * Case load by demographic features.
+    * Race
+    * Ethnicity
+    * Socioeconomic factors
+
+## Data Analysis and Visualization with User Choices and Results
+
+* EDA of predictors and outcome variable(s)
+* Potential Predictors
+  * 
+* Outcome Variable(s)
+  * Deaths
+  * Recovered patients.
+
+## Statistical Modeling with User Choices and Results
+
+* Mortality rate projection based on time-series data.
+  * Date
+  *
+* Case load projections.
+  * Hello World
+
+# Allocation of Responsibilities for the team
+
+* Chidi Agabaeruneke *researcher & analyst*
+* Corey Hutton *researcher & analyst*
+* Ifebunandu Okeke *researcher & analyst*
+* Umeadim Okwudishu *researcher & analyst*
+
+# Initial questions of interest
+
+* Transmission rate with vaccine vs pre-vaccine level?
+* What is the financial allocation by locale?
+  * Resources availability by state/county
+* What is the vaccine distribution by area and vendor? 
+* What is the response to the vaccine(s)?
+  * Compare available vaccines
+* What is the growth rate of cases since vaccine roll-out?
+* What is the mortality rate before and after vaccine distribution?
+ 
+
+# Project Steps and schedule
+
+* Week 0 (3/10)
+
+  * Pick topic
+  * Questions of Interest
+  * Meeting times established.
+
+* Week 1 (3/17)
+
+  * Choose data source and collection method.
+  * Collect the data.
+  * Compile references for literature review.
+    * One per group member.
+  * Data exploration.
+  * Brainstorm and outline Use Case for the Shiny App.
+  * Establish project repo on GitHub.
+  
+* Week 2 (3/24)
+
+  * Each member drafts write-up for respective reference for the literature review.
+  * Begin development on the COVID Informational Shiny App.
+  * Meet with Professor Ressler.
+    * Determine availability.
+  
+* Week 3 (3/31)
+
+  * Create Vignette
+    * Use Case
+      * Problem the app is designed to solve.
+  * Meet with Professor Ressler.
+    * Determine availability.
+    
+* Week 4 (4/7)
+
+  * Finalize the Shiny App
+  * Finalize the Vignette
+  
+* Week 5 (4/14)
+
+  * Write up script for oral presentation.
+  * Detailed write-up on how to use the Shiny app.
+  * Meet with Professor Ressler.
+    * Determine availability.
+  
+* Week 6 (4/21)
+
+  * Final Review of the Shiny app, Vignette, demonstration, and oral presentation materials.
+    * Make necessary improvements as suggested from meeting with Professor Ressler.
+
+* Week 7 (4/28)
+
+  * Practice, practice, practice the demonstration and oral presentation.
+
+
+
+
+
