@@ -21,14 +21,14 @@ library(tidyverse)
 #'
 #' @examples getNumRows('9bhg-hcku', 'data_as_of')
 getNumRows <- function (dataSetID, keyColumn) {
-    dataSetURL = str_c('https://data.cdc.gov/resource/', dataSetID, '.json')
-    selectValue = str_c('count(', keyColumn, ')')
+    dataSetURL <- str_c('https://data.cdc.gov/resource/', dataSetID, '.json')
+    selectValue <- str_c('count(', keyColumn, ')')
 
     response <- GET(dataSetURL,
                     authenticate(key_get('CDC Socrata API Key ID'),  # FIXME: should we rename these?
                                  key_get('CDC Socrata API Key Secret')),
                     query = list('$select' = selectValue))
-    results = content(response)
+    results <- content(response)
 
     if (!is.null(results$error) && results$error == TRUE ||
             status_code(response) != 200) {
