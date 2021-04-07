@@ -1,0 +1,100 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+# Loading required libraries
+library(tidyverse)
+library(jsonlite)
+library(httr)
+library(usethis)
+library(keyring)
+library(tidytext)
+library(ggrepel)
+library(lubridate)
+```
+
+
+```{r}
+# Saving API key to system
+key_set("CDC_DATA")
+key_set("CDC_DATA_SECRET")
+
+key_get("CDC_DATA")
+```
+
+```{r}
+# Retrieving the data from the NASA portal
+pfizer <- GET(url = "https://urldefense.com/v3/__https://data.cdc.gov/resource/saz5-9hgg.json?$limit=2000__;!!IaT_gp1N!hMv0lm-Ky7WZB8Ubl5pVIQi5ioM3suusAc5h3WjzouYGC5Vv8Z96xJ9aFfJcJ8rjBvwF$ ",
+           # query = list(t = "O",
+                         #plot = "Spot Price", 
+                         r = "json", # The data type to return.
+                         apikey = key_get("CDC_DATA")); pfizer
+
+moderna <- GET(url = "https://urldefense.com/v3/__https://data.cdc.gov/resource/b7pe-5nws.json?$limit=2000__;!!IaT_gp1N!hMv0lm-Ky7WZB8Ubl5pVIQi5ioM3suusAc5h3WjzouYGC5Vv8Z96xJ9aFfJcJ_Ei-VgW$ ",
+           # query = list(t = "O",
+                         #plot = "Spot Price", 
+                         r = "json", # The data type to return.
+                         apikey = key_get("CDC_DATA")); moderna
+
+janssen <- GET(url = "https://urldefense.com/v3/__https://data.cdc.gov/resource/w9zu-fywh.json?$limit=2000__;!!IaT_gp1N!hMv0lm-Ky7WZB8Ubl5pVIQi5ioM3suusAc5h3WjzouYGC5Vv8Z96xJ9aFfJcJ5bPm1L4$ ",
+           # query = list(t = "O",
+                         #plot = "Spot Price", 
+                         r = "json", # The data type to return.
+                         apikey = key_get("CDC_DATA")); janssen
+```
+
+```{r}
+# Convert content to a tibble
+pfizer_vac_data <- rawToChar(pfizer$content) %>%
+  fromJSON(simplifyVector = FALSE) %>%
+  tibble(); pfizer_vac_data
+
+
+moderna_vac_data <- rawToChar(moderna$content) %>%
+  fromJSON(simplifyVector = FALSE) %>%
+  tibble(); moderna_vac_data
+
+
+janssen_vac_data <- rawToChar(janssen$content) %>%
+  fromJSON(simplifyVector = FALSE) %>%
+  tibble(); janssen_vac_data
+```
+```{r}
+pfizer_vaccine <- unnest_wider(pfizer_vac_data, col = ., simplify = T); pfizer_vaccine
+
+moderna_vaccine <- unnest_wider(moderna_vac_data, col = ., simplify = T); moderna_vaccine
+
+janssen_vaccine <- unnest_wider(janssen_vac_data, col = ., simplify = T); janssen_vaccine
+
+```
+
+```{r}
+pfizer_vaccine %>%
+  mutate(jurisdiction = factor(jurisdiction),
+         week_of_allocations = str_trim(str_sub(week_of_allocations, 1, -14)),
+         week_of_allocations = ymd(week_of_allocations),
+         `_1st_dose_allocations` = as.numeric(`_1st_dose_allocations`),
+         `_2nd_dose_allocations` = as.numeric(`_2nd_dose_allocations`)) -> pfizer
+
+moderna_vaccine %>%
+  mutate(jurisdiction = factor(jurisdiction),
+         week_of_allocations = str_trim(str_sub(week_of_allocations, 1, -14)),
+         week_of_allocations = ymd(week_of_allocations),
+         `_1st_dose_allocations` = as.numeric(`_1st_dose_allocations`),
+         `_2nd_dose_allocations` = as.numeric(`_2nd_dose_allocations`)) -> moderna
+
+janssen_vaccine %>%
+  mutate(jurisdiction = factor(jurisdiction),
+         week_of_allocations = str_trim(str_sub(week_of_allocations, 1, -14)),
+         week_of_allocations = ymd(week_of_allocations),
+         `_1st_dose_allocations` = as.numeric(`_1st_dose_allocations`)) -> janssen
+```
+
+```{r}
+janssen %>%
+  distinct(jurisdiction, week_of_allocations)
+```
+
