@@ -25,8 +25,8 @@ getNumRows <- function (dataSetID, keyColumn) {
     selectValue <- str_c('count(', keyColumn, ')')
 
     response <- GET(dataSetURL,
-                    authenticate(key_get('CDC Socrata API Key ID'),  # FIXME: should we rename these?
-                                 key_get('CDC Socrata API Key Secret')),
+                    authenticate(key_get('CDC_DATA'),
+                                 key_get('CDC_DATA_SECRET')),
                     query = list('$select' = selectValue))
     results <- content(response)
 
