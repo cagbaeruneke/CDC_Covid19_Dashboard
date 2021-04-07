@@ -42,10 +42,10 @@ numRows <- getNumRows('9bhg-hcku', 'data_as_of')
 
 
 ui <- fluidPage(titlePanel("ACCJ COVID-19 Shiny App"),
-                tabsetPanel( tabPanel(title = "Adim",value = 1),
-                             tabPanel(title = "Chidi",value = 2),
-                             tabPanel(title = "Corey",value = 3),
-                             tabPanel(title = "Jerome", value = 4),
+                tabsetPanel( tabPanel(title = "Explore",value = 1), # exploratory data analysis
+                             tabPanel(title = "Compare",value = 2), # Bivariate data analysis and statistical modelling
+                             tabPanel(title = "Locate", value = 3), # Maps
+                             tabPanel(title = "Spreadsheet", value = 4), # Datasets.
                              id="tab"),
                 conditionalPanel(condition = "input.tab==1",
                                  sidebarPanel(),
@@ -58,7 +58,8 @@ ui <- fluidPage(titlePanel("ACCJ COVID-19 Shiny App"),
                                  mainPanel()),
                 conditionalPanel(condition = "input.tab==4",
                                  sidebarPanel(),
-                                 mainPanel()),
+                                 mainPanel())
+           
 
 )
 
