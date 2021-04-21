@@ -1,70 +1,137 @@
 #
-# Developer documentation:
-#   https://dev.socrata.com/foundry/data.cdc.gov/9bhg-hcku
-
 # Dataset documentation:
 #   https://data.cdc.gov/NCHS/Provisional-COVID-19-Death-Counts-by-Sex-Age-and-S/9bhg-hcku
+#   https://data.cdc.gov/Case-Surveillance/COVID-19-Case-Surveillance-Public-Use-Data/vbim-akqf
+#
 
 
 library(shiny)
 library(httr)
 library(keyring)
 library(tidyverse)
+library(jsonlite)
 
 
-#' getNumRows
+#' Get the CDC Socrata API JSON endpoint for a given data set ID
+#'
+#' @param dataSetID the Socrata API data set ID (of the form xxxx-xxxx)
+#'
+#' @return a string of the URL (scheme, host, and path, no query params)
+#'
+#' @examples getDataSetURL('vbim-akqf')
+getDataSetURL <- function(dataSetID) {
+  return(str_c('https://data.cdc.gov/resource/', dataSetID, '.json'))
+}
+
+#' A wrapper around `httr::GET()` to handle authentication and errors
+#'
+#' @param dataSetID the Socrata API data set ID (of the form xxxx-xxxx)
+#' @param query a list of named string elements to be used as query parameters
+#'
+#' @return a response object from the enclosed `GET()` call
+#'
+#' @examples doGET('9bhg-hcku', list('$select' = 'max(:updated_at)'))
+doGET <- function(dataSetID, query, returnResponse = FALSE) {
+  response <- GET(getDataSetURL(dataSetID),
+                  authenticate(key_get('CDC_DATA'),
+                               key_get('CDC_DATA_SECRET')),
+                  query = query)
+  results <- content(response)
+
+  if (!is.null(results$error) && results$error == TRUE ||
+      status_code(response) != 200) {
+    stop(results$message)
+  }
+
+  if (returnResponse) {
+    return(response)
+  }
+
+  return(results)
+}
+
+#' Get the number of rows in a dataset
 #'
 #' @param dataSetID the Socrata API data set ID (of the form xxxx-xxxx)
 #' @param keyColumn the name of a column that exists for all rows
 #'
-#' @return an integer representing the number of rows in the data set
+#' @return a string representing the number of rows in the data set
 #'
 #' @examples getNumRows('9bhg-hcku', 'data_as_of')
-getNumRows <- function (dataSetID, keyColumn) {
-    dataSetURL <- str_c('https://data.cdc.gov/resource/', dataSetID, '.json')
-    selectValue <- str_c('count(', keyColumn, ')')
-
-    response <- GET(dataSetURL,
-                    authenticate(key_get('CDC_DATA'),
-                                 key_get('CDC_DATA_SECRET')),
-                    query = list('$select' = selectValue))
-    results <- content(response)
-
-    if (!is.null(results$error) && results$error == TRUE ||
-            status_code(response) != 200) {
-        # TODO: display results$message
-    }
-
-    return(as.integer(results[[1]][[1]]))
+getNumRows <- function(dataSetID, keyColumn) {
+  results <- doGET(dataSetID,
+                   list('$select' = str_c('count(', keyColumn, ')')))
+  results[[1]][[1]] %>%
+    return()
 }
 
-numRows <- getNumRows('9bhg-hcku', 'data_as_of')
+#' Download a full data set
+#'
+#' @param dataSetID the Socrata API data set ID (of the form xxxx-xxxx)
+#' @param keyColumn the name of a column that exists for all rows
+#'
+#' @return a data frame containing the data set
+#'
+#' @examples loadData('vbim-akqf', 'current_status')
+loadData <- function(dataSetID, keyColumn) {
+  numRows <- getNumRows(dataSetID, keyColumn)
+
+  doGET(dataSetID,
+        list('$limit' = numRows),
+        returnResponse = TRUE) %>%
+    content(as = 'text') %>%
+    fromJSON() %>%
+    return()
+}
 
 
-ui <- fluidPage(titlePanel("ACCJ COVID-19 Shiny App"),
-                tabsetPanel( tabPanel(title = "Explore",value = 1), # exploratory data analysis
-                             tabPanel(title = "Compare",value = 2), # Bivariate data analysis and statistical modelling
-                             tabPanel(title = "Locate", value = 3), # Maps
-                             tabPanel(title = "Spreadsheet", value = 4), # Datasets.
-                             id="tab"),
-                conditionalPanel(condition = "input.tab==1",
-                                 sidebarPanel(),
-                                 mainPanel()),
-                conditionalPanel(condition = "input.tab==2",
-                                 sidebarPanel(),
-                                 mainPanel()),
-                conditionalPanel(condition = "input.tab==3",
-                                 sidebarPanel(),
-                                 mainPanel()),
-                conditionalPanel(condition = "input.tab==4",
-                                 sidebarPanel(),
-                                 mainPanel())
-           
 
+
+
+
+# FIXME: 22 million rows is too big to download every time and on the fly;
+#        we should probably use the CSV version instead?
+# fullData <- loadData('vbim-akqf', 'current_status')
+
+# TODO: use the smaller provisional data set for now
+fullData <- loadData('9bhg-hcku', 'data_as_of')
+
+
+ui <- fluidPage(
+  titlePanel("ACCJ COVID-19 Shiny App"),
+  tabsetPanel(
+    tabPanel(
+      "Explore",  # Exploratory data analysis
+      sidebarLayout(
+        sidebarPanel(),
+        mainPanel()
+      )
+    ),
+    tabPanel(
+      "Compare",  # Bivariate data analysis and statistical modeling
+      sidebarLayout(
+        sidebarPanel(),
+        mainPanel()
+      )
+    ),
+    tabPanel(
+      "Locate",  # Maps
+      sidebarLayout(
+        sidebarPanel(),
+        mainPanel()
+      )
+    ),
+    tabPanel(
+      "Spreadsheet",  # Datasets
+      dataTableOutput('spreadsheet')
+    )
+  )
 )
 
 server <- function(input, output, session) {
-
+  output$spreadsheet <- renderDataTable({
+    fullData
+  })
 }
 
 shinyApp(ui, server)
