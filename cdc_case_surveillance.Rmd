@@ -1,0 +1,57 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+# Loading required libraries
+library(tidyverse)
+library(jsonlite)
+library(httr)
+library(usethis)
+library(keyring)
+library(tidytext)
+library(ggrepel)
+
+
+# Saving API key to system
+#key_set("CDC_API_KEY_SECURE")
+key_get("NASA2_API_KEY_SECURE")
+```
+
+
+```{r}
+# COVID-19 Case Surveillance Public Use Data
+case_surveillance_data <- GET(url = "https://data.cdc.gov/resource/vbim-akqf.json?$limit=100000",
+                         r = "json", # The data type to return.
+                         apikey = key_get("NASA2_API_KEY_SECURE")); case_surveillance_data
+```
+
+```{r}
+# Convert content to a tibble
+case_surveillance <- rawToChar(case_surveillance_data$content) %>%
+  fromJSON(simplifyVector = FALSE) %>%
+  tibble(); case_surveillance
+```
+
+```{r}
+case_surveillance_tbl <- unnest_wider(case_surveillance, col = ., simplify = T); case_surveillance_tbl # extracts the main list
+
+
+```
+```{r}
+library(lubridate)
+
+tidy_case_surveillance_tbl <- case_surveillance_tbl %>%
+  mutate(cdc_case_earliest_dt = str_sub(cdc_case_earliest_dt, 1, 10),
+         cdc_report_dt = str_sub(cdc_report_dt, 1, 10),
+         pos_spec_dt = str_sub(pos_spec_dt, 1, 10),
+         onset_dt = str_sub(onset_dt, 1, 10)) %>%
+  mutate_at(vars(matches("dt")), ymd) %>%
+  mutate_at(vars(current_status:medcond_yn), as_factor); tidy_case_surveillance_tbl
+  
+```
+
+
