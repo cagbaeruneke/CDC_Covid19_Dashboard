@@ -96,12 +96,59 @@ loadData <- function(dataSetID, keyColumn) {
 # TODO: use the smaller provisional data set for now
 fullData <- loadData('9bhg-hcku', 'data_as_of')
 
+fullData <- fullData %>% 
+  mutate(data_as_of = str_sub(data_as_of, 1, 10),
+         start_date = str_sub(start_date, 1, 10),
+         end_date = str_sub(end_date, 1, 10),
+         footnote = NULL,
+         data_as_of = NULL) %>%
+  mutate_at(vars(matches("dat")), lubridate::ymd) %>%
+  mutate_at(vars(group:age_group, year:month), as_factor) %>%
+  mutate_at(vars(matches("deaths|covid")), as.numeric) %>% 
+  filter(state != "United States")
 
 ui <- fluidPage(
   titlePanel("ACCJ COVID-19 Shiny App"),
   tabsetPanel(
     tabPanel(
       "Explore",  # Exploratory data analysis
+      fluidRow(
+        column(5,
+               sidebarPanel(
+                 selectInput(inputId = "var1", label = "Variable (Univariate)", choices = names(fullData), selected = "covid_19_deaths"),
+                 checkboxInput(inputId = "log1", label = "Log_Transform?", value = FALSE, width = NULL),
+                 sliderInput(inputId = "bins1", label = "Bins", min = 1, max = 100, value = 50),
+               )
+        ),
+        column(7,
+               mainPanel(
+                 plotOutput("plot1"),
+               )
+        )
+      ),
+      fluidRow(
+        column(5,
+               sidebarPanel(
+                 selectInput("var2",label = "X Variable (Bivariate)",
+                             choices = names(fullData),
+                             selected = "age_group"),
+                 checkboxInput("log2", "Log_Transform?", value = FALSE, width = NULL),
+                 selectInput("var3",label = "Y Variable (Bivariate)",
+                             choices = names(fullData),
+                             selected = "covid_19_deaths"),
+                 checkboxInput("log3", "Log_Transform?", value = FALSE, width = NULL),
+                 checkboxInput("ols1", "Fit OLS?", value = FALSE, width = NULL),
+               )
+        ),
+        column(7,
+               mainPanel(
+                 plotOutput("plot2"),
+               )
+        )
+      )
+    ),
+    tabPanel(
+      "Compare",  # Bivariate data analysis and statistical modeling
       sidebarLayout(
         sidebarPanel(),
         mainPanel()
@@ -131,6 +178,86 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   output$spreadsheet <- renderDataTable({
     fullData
+  })
+  output$plot1 <- renderPlot({
+    
+    if (is.numeric(fullData[,input$var1])) {
+      
+      if(!input$log1)
+      {
+        ggplot(fullData, aes(x = .data[[input$var1]])) +
+          geom_histogram(bins = input$bins1)
+      }
+      else
+      {
+        ggplot(fullData, aes(x = .data[[input$var1]]))+
+          geom_histogram(bins = input$bins1) +
+          scale_x_log10()
+      }
+    }
+    
+    else {
+      ggplot(fullData, aes(x = .data[[input$var1]])) +
+        geom_bar()
+    }
+  })
+  output$plot2 <- renderPlot({
+    
+    if (is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])) {
+      p2 <- ggplot(fullData, aes(x = .data[[input$var2]], y = .data[[input$var3]])) +
+        geom_point()
+      if(!input$log2 && !input$log3)
+      {
+        p2
+      }
+      else if(input$log2 && !input$log3)
+      {
+        p2<- p2 + scale_x_log10()
+        p2
+      }
+      else if(!input$log2 && input$log3)
+      {
+        p2<- p2 + scale_y_log10()
+        p2
+      }
+      else
+      {
+        p2<- p2 + scale_x_log10() + scale_y_log10()
+        p2
+      }
+      
+      if(input$ols1)
+      {
+        p2 <- p2 +geom_smooth(method='lm', formula= y~x, se=FALSE)
+        p2
+      }
+      else
+      {
+        p2
+      }
+      
+    }
+    else if (!is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])&&!input$log2 && input$log3) {
+      ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+        geom_boxplot() + scale_y_log10()
+    }
+    else if (is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])&&input$log2 && !input$log3) {
+      ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+        geom_boxplot() + scale_x_log10() + ggstance::geom_boxploth()
+    }
+    else if (!is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])) {
+      ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+        geom_boxplot()
+    }
+    else if (is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])) {
+      ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+        geom_boxplot() + ggstance::geom_boxploth()
+    }
+    
+    else if (!is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])) {
+      ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+        geom_jitter()
+    }
   })
 }
 
