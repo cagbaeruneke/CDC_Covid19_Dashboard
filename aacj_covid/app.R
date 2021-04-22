@@ -10,6 +10,9 @@ library(httr)
 library(keyring)
 library(tidyverse)
 library(jsonlite)
+library(usmap)
+
+data(statepop)
 
 
 #' Get the CDC Socrata API JSON endpoint for a given data set ID
@@ -96,6 +99,14 @@ loadData <- function(dataSetID, keyColumn) {
 # TODO: use the smaller provisional data set for now
 fullData <- loadData('9bhg-hcku', 'data_as_of')
 
+DEATH_COLUMN_OPTIONS <- c(
+  'COVID-19 Deaths' = 'covid_19_deaths',
+  'Total Deaths' = 'total_deaths',
+  'Pneumonia Deaths' = 'pneumonia_deaths',
+  'Pneumonia & COVID-19 Deaths' = 'pneumonia_and_covid_19_deaths',
+  'Influenza Deaths' = 'influenza_deaths',
+  'Pneumonia, Influenza, or COVID-19 Deaths' = 'pneumonia_influenza_or_covid'
+)
 
 ui <- fluidPage(
   titlePanel("ACCJ COVID-19 Shiny App"),
@@ -117,8 +128,21 @@ ui <- fluidPage(
     tabPanel(
       "Locate",  # Maps
       sidebarLayout(
-        sidebarPanel(),
-        mainPanel()
+        sidebarPanel(
+          selectInput('deaths', 'Cause(s) of Death', DEATH_COLUMN_OPTIONS,
+                      selected = 'COVID-19 Deaths'),
+          selectInput('state', 'State', unique(fullData$state),
+                      selected = 'United States'),  # TODO: change to "All States", remove PR
+          selectInput('group', 'Group', unique(fullData$group),
+                      selected = 'By Total'),
+          selectInput('sex', 'Sex', unique(fullData$sex),
+                      selected = 'All Sexes'),
+          selectInput('age_group', 'Age Group', unique(fullData$age_group),
+                      selected = 'All Ages')
+        ),
+        mainPanel(
+          plotOutput('map')
+        )
       )
     ),
     tabPanel(
@@ -129,6 +153,32 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
+  output$map <- renderPlot({
+    fullData %>%
+      filter(!(state %in% c('United States', 'Puerto Rico'))) %>%
+      filter(group == input$group &
+             sex == input$sex &
+             age_group == input$age_group) %>%
+      inner_join(statepop, by = c('state' = 'full')) ->
+      stateData
+
+    if (input$state != 'United States') {  # TODO: change to "All States"
+      stateData %>%
+        filter(state == input$state) ->
+        stateData
+    }
+
+    stateData %>%
+      select('fips', input$deaths) ->
+      stateData
+
+    stateData[[input$deaths]] <- as.integer(stateData[[input$deaths]])
+
+    plot_usmap(regions = 'states',
+               data = stateData,
+               values = input$deaths)
+  })
+
   output$spreadsheet <- renderDataTable({
     fullData
   })
