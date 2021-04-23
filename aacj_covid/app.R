@@ -167,13 +167,6 @@ ui <- fluidPage(
       )
     ),
     tabPanel(
-      "Compare",  # Bivariate data analysis and statistical modeling
-      sidebarLayout(
-        sidebarPanel(),
-        mainPanel()
-      )
-    ),
-    tabPanel(
       "Locate",  # Maps
       sidebarLayout(
         sidebarPanel(
