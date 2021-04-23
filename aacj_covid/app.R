@@ -227,9 +227,6 @@ server <- function(input, output, session) {
                values = input$deaths)
   })
 
-  output$spreadsheet <- renderDataTable({
-    fullData
-  })
   output$plot1 <- renderPlot({
 
     if (is.numeric(fullData[,input$var1])) {
@@ -309,6 +306,10 @@ server <- function(input, output, session) {
       ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
         geom_jitter()
     }
+  })
+
+  output$spreadsheet <- renderDataTable({
+    fullData
   })
 }
 
