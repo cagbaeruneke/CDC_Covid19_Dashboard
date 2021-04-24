@@ -11,6 +11,7 @@ library(keyring)
 library(tidyverse)
 library(jsonlite)
 library(usmap)
+library(scales)
 
 data(statepop)
 
@@ -117,6 +118,10 @@ DEATH_COLUMN_OPTIONS <- c(
   'Influenza Deaths' = 'influenza_deaths',
   'Pneumonia, Influenza, or COVID-19 Deaths' = 'pneumonia_influenza_or_covid'
 )
+STATE_OPTIONS <- c(
+  'All States',
+  unique(as.character(fullData$state[fullData$state != 'Puerto Rico'])),
+  recursive = TRUE)
 
 
 ui <- fluidPage(
@@ -168,12 +173,13 @@ ui <- fluidPage(
     ),
     tabPanel(
       "Locate",  # Maps
-      sidebarLayout(
-        sidebarPanel(
+      fluidRow(
+        column(
+          4,
           selectInput('deaths', 'Cause(s) of Death', DEATH_COLUMN_OPTIONS,
                       selected = 'COVID-19 Deaths'),
-          selectInput('state', 'State', unique(fullData$state),
-                      selected = 'United States'),  # TODO: change to "All States", remove PR
+          selectInput('state', 'State', STATE_OPTIONS,
+                      selected = 'All States'),
           selectInput('group', 'Group', unique(fullData$group),
                       selected = 'By Total'),
           selectInput('sex', 'Sex', unique(fullData$sex),
@@ -181,8 +187,15 @@ ui <- fluidPage(
           selectInput('age_group', 'Age Group', unique(fullData$age_group),
                       selected = 'All Ages')
         ),
-        mainPanel(
+        column(
+          8,
           plotOutput('map')
+        )
+      ),
+      fluidRow(
+        column(
+          12,
+          plotOutput('mapPlot')
         )
       )
     ),
@@ -194,35 +207,88 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  output$map <- renderPlot({
+  mapData <- reactive({
     fullData %>%
-      filter(!(state %in% c('United States', 'Puerto Rico'))) %>%
-      filter(group == input$group &
-             sex == input$sex &
-             age_group == input$age_group) %>%
+      filter(state != 'Puerto Rico' &
+               group == input$group &
+               sex == input$sex &
+               age_group == input$age_group) %>%
       inner_join(statepop, by = c('state' = 'full')) ->
-      stateData
+      result
 
-    if (input$state != 'United States') {  # TODO: change to "All States"
-      stateData %>%
+    if (input$state != 'All States') {
+      result %>%
         filter(state == input$state) ->
-        stateData
+        result
     }
 
-    stateData %>%
-      select('fips', input$deaths) ->
-      stateData
-
-    stateData[[input$deaths]] <- as.integer(stateData[[input$deaths]])
-
-    plot_usmap(regions = 'states',
-               data = stateData,
-               values = input$deaths)
+    return(result)
+  })
+  mapDeathsTitle <- reactive({
+    names(DEATH_COLUMN_OPTIONS[DEATH_COLUMN_OPTIONS == input$deaths])[[1]]
   })
 
-  output$spreadsheet <- renderDataTable({
-    fullData
+  output$map <- renderPlot({
+    deathsTitle <- mapDeathsTitle()
+    stateData <- mapData()
+
+    if (input$group == 'By Total') {
+      stateData <- select(stateData, 'fips', input$deaths)
+
+      plot_usmap(regions = 'states',
+                 data = stateData,
+                 values = input$deaths) +
+        labs(fill = 'Deaths') +
+        scale_fill_continuous(labels = comma) +
+        scale_fill_viridis_c()
+    } else {
+      stateData %>%
+        group_by(state) %>%
+        mutate(sumDeaths = sum(!!as.symbol(input$deaths), na.rm = TRUE)) %>%
+        ungroup() %>%
+        select(fips, sumDeaths) ->
+        stateData
+
+      plot_usmap(regions = 'states',
+                 data = stateData,
+                 values = 'sumDeaths') +
+        labs(fill = 'Cumulative Deaths') +
+        scale_fill_continuous(labels = comma) +
+        scale_fill_viridis_c()
+    }
   })
+
+  output$mapPlot <- renderPlot({
+    plotData <- mapData()
+    deathsTitle <- mapDeathsTitle()
+
+    if (input$group == 'By Year') {
+      plotData %>%
+        ggplot(aes(year, plotData[[input$deaths]], fill = year)) +
+        geom_line() +
+        geom_col(show.legend = FALSE) +
+        labs(x = 'Year',
+             y = str_c('Number of Deaths'),
+             title = str_c(deathsTitle, ' by Year')) +
+        scale_y_continuous(labels = comma) +
+        scale_fill_viridis_d() +
+        theme_bw()
+    } else if (input$group == 'By Month') {
+      plotData %>%
+        group_by(year, month) %>%
+        mutate(monthYear = str_c(year, '-', str_pad(month, 2, 'left', '0'))) %>%
+        ggplot(aes(monthYear, plotData[[input$deaths]], fill = year)) +
+        geom_line() +
+        geom_col() +
+        labs(x = 'Month',
+             y = str_c('Number of Deaths'),
+             title = str_c(deathsTitle, ' by Month')) +
+        scale_y_continuous(labels = comma) +
+        scale_fill_viridis_d() +
+        theme_bw()
+    }
+  })
+
   output$plot1 <- renderPlot({
 
     if (is.numeric(fullData[,input$var1])) {
@@ -302,6 +368,10 @@ server <- function(input, output, session) {
       ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
         geom_jitter()
     }
+  })
+
+  output$spreadsheet <- renderDataTable({
+    fullData
   })
 }
 
