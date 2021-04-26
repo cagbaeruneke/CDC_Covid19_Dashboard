@@ -53,24 +53,30 @@ The purpose of this app is provide available COVID information and present in a 
 
 ## Overall Layout
 
-* 4 tabs
+* 4 tabs, with relevant EDA and statistical modeling output on each tab
   * Time-series trends.
   * Dispersion across geographic areas.
   * Allocation of financial resources to medical institutions juxtaposed against cases and mortality rates.
   * Case load by demographic features.
-    * Race
-    * Ethnicity
-    * Socioeconomic factors
   * Vaccine Distribution
 
 ## Data Analysis and Visualization with User Choices and Results
 
 * EDA of predictors and outcome variable(s)
 * Potential Predictors
-  * 
+  * Demographics
+    * Age
+    * Race
+    * Ethnicity
+    * Socioeconomic factors
+    * Gender
+  * State/county
+  * Population density
+  * Urban/rural
 * Outcome Variable(s)
   * Deaths
   * Recovered patients.
+  * Cases.
 
 ## Statistical Modeling with User Choices and Results
 
@@ -78,13 +84,19 @@ The purpose of this app is provide available COVID information and present in a 
   * Date
   *
 * Case load projections.
+
   * 
+* Statistical comparison between two states/counties
+  * Something like: "a person living in Iowa has an __% higher chance of recovering from COVID than a person living in Nebraska"
+  * Demographic options
+    * Comparing same demographics
+    * Comparing different demographics
 
 # Allocation of Responsibilities for the team
 
 * Chidi Agabaeruneke *researcher & analyst*
 * Corey Hutton *researcher & analyst*
-* Ifebunandu Okeke *researcher & analyst*
+* Ifebunandu Jerome Okeke *researcher & analyst*
 * Umeadim Okwudishu *researcher & analyst*
 
 # Initial questions of interest
