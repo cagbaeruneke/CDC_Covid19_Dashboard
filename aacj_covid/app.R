@@ -93,11 +93,6 @@ loadData <- function(dataSetID, keyColumn) {
 
 
 
-# FIXME: 22 million rows is too big to download every time and on the fly;
-#        we should probably use the CSV version instead?
-# fullData <- loadData('vbim-akqf', 'current_status')
-
-# TODO: use the smaller provisional data set for now
 fullData <- loadData('9bhg-hcku', 'data_as_of')
 fullData <- fullData %>%
   mutate(data_as_of = str_sub(data_as_of, 1, 10),
@@ -110,6 +105,7 @@ fullData <- fullData %>%
   mutate_at(vars(matches("deaths|covid")), as.numeric) %>%
   filter(state != "United States")
 
+AGE_OPTIONS <- unique(fullData$age_group)
 DEATH_COLUMN_OPTIONS <- c(
   'COVID-19 Deaths' = 'covid_19_deaths',
   'Total Deaths' = 'total_deaths',
@@ -118,10 +114,12 @@ DEATH_COLUMN_OPTIONS <- c(
   'Influenza Deaths' = 'influenza_deaths',
   'Pneumonia, Influenza, or COVID-19 Deaths' = 'pneumonia_influenza_or_covid'
 )
-STATE_OPTIONS <- c(
-  'All States',
-  unique(as.character(fullData$state[fullData$state != 'Puerto Rico'])),
-  recursive = TRUE)
+GROUP_OPTIONS <- unique(fullData$group)
+SEX_OPTIONS <- unique(fullData$sex)
+STATE_OPTIONS <-
+  c('All States',
+    unique(as.character(fullData$state[fullData$state != 'Puerto Rico'])),
+    recursive = TRUE)
 
 
 ui <- fluidPage(
@@ -178,13 +176,10 @@ ui <- fluidPage(
           4,
           selectInput('deaths', 'Cause(s) of Death', DEATH_COLUMN_OPTIONS,
                       selected = 'COVID-19 Deaths'),
-          selectInput('state', 'State', STATE_OPTIONS,
-                      selected = 'All States'),
-          selectInput('group', 'Group', unique(fullData$group),
-                      selected = 'By Total'),
-          selectInput('sex', 'Sex', unique(fullData$sex),
-                      selected = 'All Sexes'),
-          selectInput('age_group', 'Age Group', unique(fullData$age_group),
+          selectInput('group', 'Group', GROUP_OPTIONS, selected = 'By Total'),
+          selectInput('state', 'State', STATE_OPTIONS, selected = 'All States'),
+          selectInput('sex', 'Sex', SEX_OPTIONS, selected = 'All Sexes'),
+          selectInput('age_group', 'Age Group', AGE_OPTIONS,
                       selected = 'All Ages')
         ),
         column(
@@ -210,83 +205,116 @@ server <- function(input, output, session) {
   mapData <- reactive({
     fullData %>%
       filter(state != 'Puerto Rico' &
-               group == input$group &
-               sex == input$sex &
-               age_group == input$age_group) %>%
-      inner_join(statepop, by = c('state' = 'full')) ->
+             group == input$group &
+             sex == input$sex &
+             age_group == input$age_group) %>%
+      mutate(deaths = .data[[input$deaths]]) %>%
+      filter(!is.na(deaths)) ->
       result
 
     if (input$state != 'All States') {
-      result %>%
-        filter(state == input$state) ->
-        result
+      result <- filter(result, state == input$state)
     }
 
-    return(result)
+    result %>%
+      inner_join(statepop, by = c('state' = 'full')) %>%
+      return()
   })
   mapDeathsTitle <- reactive({
     names(DEATH_COLUMN_OPTIONS[DEATH_COLUMN_OPTIONS == input$deaths])[[1]]
   })
 
   output$map <- renderPlot({
-    deathsTitle <- mapDeathsTitle()
     stateData <- mapData()
 
     if (input$group == 'By Total') {
-      stateData <- select(stateData, 'fips', input$deaths)
-
-      plot_usmap(regions = 'states',
-                 data = stateData,
-                 values = input$deaths) +
-        labs(fill = 'Deaths') +
-        scale_fill_continuous(labels = comma) +
-        scale_fill_viridis_c()
+      fillLabel <- 'Deaths'
     } else {
-      stateData %>%
-        group_by(state) %>%
-        mutate(sumDeaths = sum(!!as.symbol(input$deaths), na.rm = TRUE)) %>%
-        ungroup() %>%
-        select(fips, sumDeaths) ->
-        stateData
+      fillLabel <- 'Cumulative\nDeaths'
 
-      plot_usmap(regions = 'states',
-                 data = stateData,
-                 values = 'sumDeaths') +
-        labs(fill = 'Cumulative Deaths') +
-        scale_fill_continuous(labels = comma) +
-        scale_fill_viridis_c()
+      stateData %>%
+        group_by(fips) %>%
+        summarize(deaths = sum(deaths, na.rm = TRUE)) ->
+        stateData
     }
+
+    if (input$state != 'All States') {
+      showLegend <- FALSE
+    } else {
+      showLegend <- TRUE
+    }
+
+    plot_usmap(regions = 'states',
+               data = select(stateData, fips, deaths),
+               values = 'deaths',
+               show.legend = showLegend) +
+      labs(fill = fillLabel) +
+      scale_fill_viridis_c(labels = label_comma()) %>%
+      return()
   })
 
   output$mapPlot <- renderPlot({
-    plotData <- mapData()
     deathsTitle <- mapDeathsTitle()
+    plotData <- mapData()
 
     if (input$group == 'By Year') {
       plotData %>%
-        ggplot(aes(year, plotData[[input$deaths]], fill = year)) +
-        geom_line() +
+        ggplot(aes(year, deaths, fill = year)) +
         geom_col(show.legend = FALSE) +
-        labs(x = 'Year',
-             y = str_c('Number of Deaths'),
-             title = str_c(deathsTitle, ' by Year')) +
-        scale_y_continuous(labels = comma) +
-        scale_fill_viridis_d() +
-        theme_bw()
+        labs(title = str_c(deathsTitle, ' by Year'),
+             x = 'Year',
+             y = 'Number of Deaths') +
+        scale_y_continuous(labels = label_comma()) +
+        scale_fill_viridis_d() ->
+        plotData
     } else if (input$group == 'By Month') {
       plotData %>%
-        group_by(year, month) %>%
-        mutate(monthYear = str_c(year, '-', str_pad(month, 2, 'left', '0'))) %>%
-        ggplot(aes(monthYear, plotData[[input$deaths]], fill = year)) +
-        geom_line() +
+        mutate(monthYear = str_c(year, '-',
+                                 str_pad(month, 2, 'left', '0'))) %>%
+        ggplot(aes(monthYear, deaths, fill = year)) +
         geom_col() +
-        labs(x = 'Month',
-             y = str_c('Number of Deaths'),
-             title = str_c(deathsTitle, ' by Month')) +
-        scale_y_continuous(labels = comma) +
-        scale_fill_viridis_d() +
-        theme_bw()
+        labs(title = str_c(deathsTitle, ' by Month'),
+             x = 'Month',
+             y = 'Number of Deaths') +
+        scale_y_continuous(labels = label_comma()) +
+        scale_fill_viridis_d() ->
+        plotData
+    } else {
+      if (input$state != 'All States') {
+        # TODO: refactor this block so that this text-only output also occurs
+        #       when state & sex & age are selected
+        plotData %>%
+          # FIXME: there's an issue here when there are no rows for a combination of state + sex + age
+          mutate(deathsText = case_when(is.na(deaths) ~ 'NA',
+                                        TRUE ~ label_comma()(deaths))) %>%
+          ggplot(aes(deaths, group)) +
+          geom_text(aes(label = deathsText), show.legend = FALSE,
+                    size = 48, vjust = 'bottom') +
+          geom_text(aes(label = deathsTitle),
+                    size = 12, vjust = 'bottom', nudge_y = -0.333) +
+          labs(title = NULL, x = NULL, y = NULL) +
+          scale_x_continuous(breaks = NULL, labels = NULL) +
+          scale_y_discrete(breaks = NULL, labels = NULL) +
+          scale_fill_viridis_c() ->
+          plotData
+      } else {
+        plotData %>%
+          mutate(state = fct_reorder(state, deaths)) %>%
+          ggplot(aes(deaths, group, label = state)) +
+          geom_col(aes(fill = deaths), show.legend = FALSE) +
+          labs(title = str_c('Combined ', deathsTitle),
+               x = 'Number of Deaths',
+               y = NULL) +
+          scale_x_continuous(labels = label_comma()) +
+          scale_y_discrete(breaks = NULL, labels = NULL) +
+          scale_fill_viridis_c() ->
+          plotData
+      }
     }
+
+    plotData +
+      theme_bw() %>%
+      return()
   })
 
   output$plot1 <- renderPlot({
