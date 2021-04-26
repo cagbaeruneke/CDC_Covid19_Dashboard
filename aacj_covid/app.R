@@ -152,7 +152,7 @@ ui <- fluidPage(
                              choices = names(fullData),
                              selected = "covid_19_deaths"),
                  checkboxInput("log3", "Log_Transform?", value = FALSE, width = NULL),
-                 checkboxInput("ols1", "Fit OLS?", value = FALSE, width = NULL),
+                 checkboxInput("ols1", "Trendline", value = FALSE, width = NULL),
                )
         ),
         column(7,
@@ -334,11 +334,17 @@ server <- function(input, output, session) {
       }
     }
 
+    else if (input$var1 == "state" || input$var1 == "age_group") {
+      ggplot(fullData, aes(x = .data[[input$var1]])) +
+        geom_bar() +
+        coord_flip()
+    }
     else {
       ggplot(fullData, aes(x = .data[[input$var1]])) +
-        geom_bar()
+        geom_bar() 
     }
   })
+  
   output$plot2 <- renderPlot({
 
     if (is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])) {
@@ -366,7 +372,7 @@ server <- function(input, output, session) {
 
       if(input$ols1)
       {
-        p2 <- p2 +geom_smooth(method='lm', formula= y~x, se=FALSE)
+        p2 <- p2 +geom_smooth(method='loess', formula = y~x, se=FALSE)
         p2
       }
       else
@@ -375,26 +381,93 @@ server <- function(input, output, session) {
       }
 
     }
-    else if (!is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])&&!input$log2 && input$log3) {
-      ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-        geom_boxplot() + scale_y_log10()
+    else if (input$var2 == "state" || input$var2 == "age_group") {
+      if (!is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])) {
+        if (!input$log2 && !input$log3) {
+          # Create p3 <- ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]]))
+          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+            geom_boxplot() + coord_flip()
+        }
+        else if (!input$log2 && input$log3) {
+          # Create p3 <- ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]]))
+          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+            geom_boxplot() + scale_y_log10() + coord_flip()
+        }
+        else if (input$log2 && !input$log3) {
+          # validate(): cannot log a non-numeric variable, please select a numeric variable.
+          # Create p3 <- ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]]))
+          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+            geom_boxplot() + coord_flip()
+        }
+        else if (input$log2 && input$log3) {
+          # validate(): cannot log a non-numeric variable, please select a numeric variable.
+          # Create p3 <- ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]]))
+          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+            geom_boxplot() + scale_y_log10() + coord_flip()
+        }
+      }
+      else if (!is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])) {
+        ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+          geom_jitter() + coord_flip()
+        # Issue: when age_group and state are on the x-axis, illegible.
+        # Consider validate() to warn against plotting age_group vs state.
+        # Add code for log transformations and add validate(): can't transform non-numerics, please select a numeric variable.
+      }
     }
-    else if (is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])&&input$log2 && !input$log3) {
-      ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-        geom_boxplot() + scale_x_log10() + ggstance::geom_boxploth()
-    }
-    else if (!is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])) {
-      ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-        geom_boxplot()
-    }
-    else if (is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])) {
-      ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-        geom_boxplot() + ggstance::geom_boxploth()
-    }
-
-    else if (!is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])) {
-      ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-        geom_jitter()
+    else if (input$var2 != "state" || input$var2 != "age_group"){
+      if (!is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])) {
+        if (!input$log2 && input$log3) {
+          # Create p3 <- ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]]))
+          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+            geom_boxplot() + scale_y_log10()
+        }
+        else if (input$log2 && !input$log3){
+          # validate(): cannot log a non-numeric variable, please select a numeric variable.
+          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+            geom_boxplot()
+        }
+        else if (input$log2 && input$log3){
+          # validate(): cannot log a non-numeric variable, please select a numeric variable.
+          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+            geom_boxplot() + scale_y_log10()
+        }
+        else if (!input$log2 && !input$log3){
+          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+            geom_boxplot()
+        }
+      }
+      else if (!is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])) {
+        ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+          geom_boxplot()
+      }
+      else if (!is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])) {
+        ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+          geom_jitter()
+      }
+      else if (is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])) {
+        if (input$log2 && !input$log3){
+          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+            geom_boxplot() + scale_x_log10() + ggstance::geom_boxploth()
+        }
+        else if (!input$log2 && input$log3){
+          # validate(): cannot log a non-numeric variable, please select a numeric variable.
+          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+            geom_boxplot() + ggstance::geom_boxploth()
+        }
+        else if (input$log2 && input$log3){
+          # validate(): cannot log a non-numeric variable, please select a numeric variable.
+          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+            geom_boxplot() + scale_x_log10() + ggstance::geom_boxploth()
+        }
+        else if (!input$log2 && !input$log3){
+          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+            geom_boxplot() + ggstance::geom_boxploth()
+        }
+      }
+      else if (is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])) {
+        ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+          geom_boxplot() + ggstance::geom_boxploth()
+      }
     }
   })
 
