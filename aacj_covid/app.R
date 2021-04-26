@@ -177,6 +177,16 @@ ui <- fluidPage(
         sidebarPanel(
           varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
           varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions"),
+          selectInput("var4",label = "X OLS",
+                                  choices = names(pre_conditions_data),
+                                  selected = "covid_19_deaths"),
+          checkboxInput("log4", "Log_Transform?", value = FALSE, width = NULL),
+          selectInput("var5",label = "Y OLS",
+                      choices = names(pre_conditions_data),
+                      selected = "conditions"),
+          checkboxInput("log5", "Log_Transform?", value = FALSE, width = NULL),
+          checkboxInput("ols2", "Fit OLS?", value = FALSE, width = NULL)
+          # Still need to input the code in the server section for summary output.
           # varSelectInput("option3", "AGE GRP:", data = pre_conditions_data %>% select_if(is.factor), selected = "age_group"),
           # varSelectInput("option4", "STATE:", data = pre_conditions_data %>% select_if(is.factor), selected = "state"),
           # selectizeInput('option2', 'Select variable 1', choices = c("choose" = "", levels(pre_conditions_data$condition))), 
