@@ -126,7 +126,10 @@ STATE_OPTIONS <-
 pre_conditions_data <- read_csv("../data/conditions.csv") %>%
   mutate_at(vars(data_as_of:end_date), lubridate::ymd) %>%
   mutate_at(vars(group:age_group), as_factor) %>%
-  mutate_at(vars(covid_19_deaths, number_of_mentions), as.numeric)
+  mutate_at(vars(covid_19_deaths, number_of_mentions), as.numeric) %>%
+  filter(group == "By Month",
+         !age_group == "Not stated") %>%
+  select(-group)
 
 ui <- fluidPage(
   titlePanel("ACCJ COVID-19 Shiny App"),
@@ -487,16 +490,47 @@ server <- function(input, output, session) {
     }
   })
   
-  
+  # varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
+  # varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions")
   output$plot <- renderPlot({
     # generate plots based on variables selected above
-    pre_conditions_data %>%
-      filter(group == "By Month",
-             !age_group == "Not stated") %>%
-      ggplot(aes(x = !!input$option1, y = !!input$option2)) +
-      geom_bar(stat = "identity") +
-      scale_x_log10() +
-      theme_bw()
+    
+    if (!!input$option2 == "age_group") {
+      pre_conditions_data %>%
+        ggplot(aes(x = !!input$option1, y = !!input$option2, fill = age_group)) +
+        geom_bar(stat = "identity", show.legend = FALSE) +
+        scale_x_log10() +
+        scale_fill_brewer(palette = "Blues") +
+        theme_gray()
+    } else if (!!input$option2 == "state") {
+      pre_conditions_data %>%
+      group_by(state) %>%
+        summarise(covid19_deaths = sum(covid_19_deaths)) %>%
+        mutate(state = fct_reorder(state, covid19_deaths)) %>%
+        ggplot(aes(covid19_deaths, state, fill = state)) +
+        geom_bar(stat = "identity", show.legend = FALSE) +
+        # scale_fill_brewer(palette = "Blues") +
+        theme_gray()
+    } else if (!!input$option2 == "condition") {
+      pre_conditions_data %>%
+      group_by(condition) %>%
+        summarise(covid19_deaths = sum(covid_19_deaths)) %>%
+        mutate(condition = fct_reorder(condition, covid19_deaths)) %>%
+        ggplot(aes(covid19_deaths, condition, fill = condition)) +
+        geom_bar(stat = "identity", show.legend = FALSE) +
+        # scale_fill_brewer(palette = "Blues") +
+        theme_gray()
+    } else if (!!input$option2 == "condition_group") {
+      pre_conditions_data %>%
+      group_by(condition_group) %>%
+        summarise(covid19_deaths = sum(covid_19_deaths)) %>%
+        mutate(condition_group = fct_reorder(condition_group, covid19_deaths)) %>%
+        ggplot(aes(covid19_deaths, condition_group, fill = condition_group)) +
+        geom_bar(stat = "identity", show.legend = FALSE) +
+        # scale_fill_brewer(palette = "Blues") +
+        theme_gray()
+    }
+   
     
   })
 
