@@ -208,8 +208,7 @@ server <- function(input, output, session) {
              group == input$group &
              sex == input$sex &
              age_group == input$age_group) %>%
-      mutate(deaths = .data[[input$deaths]]) %>%
-      filter(!is.na(deaths)) ->
+      mutate(deaths = .data[[input$deaths]]) ->
       result
 
     if (input$state != 'All States') {
@@ -281,11 +280,10 @@ server <- function(input, output, session) {
         plotData
     } else {
       if (input$state != 'All States') {
-        # TODO: refactor this block so that this text-only output also occurs
-        #       when state & sex & age are selected
         plotData %>%
-          # FIXME: there's an issue here when there are no rows for a combination of state + sex + age
-          mutate(deathsText = case_when(is.na(deaths) ~ 'NA',
+          mutate(deaths = case_when(is.na(deaths) ~ -1,
+                                    TRUE ~ deaths),
+                 deathsText = case_when(deaths == -1 ~ 'NA',
                                         TRUE ~ label_comma()(deaths))) %>%
           ggplot(aes(deaths, group)) +
           geom_text(aes(label = deathsText), show.legend = FALSE,
@@ -341,10 +339,10 @@ server <- function(input, output, session) {
     }
     else {
       ggplot(fullData, aes(x = .data[[input$var1]])) +
-        geom_bar() 
+        geom_bar()
     }
   })
-  
+
   output$plot2 <- renderPlot({
 
     if (is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])) {
