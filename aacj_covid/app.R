@@ -123,6 +123,12 @@ STATE_OPTIONS <- c(
   unique(as.character(fullData$state[fullData$state != 'Puerto Rico'])),
   recursive = TRUE)
 
+# Pre conditions data
+
+pre_conditions_data <- read_csv("../data/conditions.csv") %>%
+  mutate_at(vars(data_as_of:end_date), lubridate::ymd) %>%
+  mutate_at(vars(group:age_group), as_factor) %>%
+  mutate_at(vars(covid_19_deaths, number_of_mentions), as.numeric)
 
 ui <- fluidPage(
   titlePanel("ACCJ COVID-19 Shiny App"),
@@ -167,8 +173,18 @@ ui <- fluidPage(
     tabPanel(
       "Compare",  # Bivariate data analysis and statistical modeling
       sidebarLayout(
-        sidebarPanel(),
-        mainPanel()
+        sidebarPanel(
+          varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
+          varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions"),
+          # varSelectInput("option3", "AGE GRP:", data = pre_conditions_data %>% select_if(is.factor), selected = "age_group"),
+          # varSelectInput("option4", "STATE:", data = pre_conditions_data %>% select_if(is.factor), selected = "state"),
+          # selectizeInput('option2', 'Select variable 1', choices = c("choose" = "", levels(pre_conditions_data$condition))), 
+          # selectizeInput('option3', 'Select variable 2', choices = c("choose" = "", levels(pre_conditions_data$age_group))),
+          # selectizeInput('option4', 'Select variable 3', choices = c("choose" = "", levels(pre_conditions_data$state)))
+        ),
+        mainPanel(
+          plotOutput("plot"),
+        )
       )
     ),
     tabPanel(
@@ -441,6 +457,19 @@ server <- function(input, output, session) {
           geom_boxplot() + ggstance::geom_boxploth()
       }
     }
+  })
+  
+  
+  output$plot <- renderPlot({
+    # generate plots based on variables selected above
+    pre_conditions_data %>%
+      filter(group == "By Month",
+             !age_group == "Not stated") %>%
+      ggplot(aes(x = !!input$option1, y = !!input$option2)) +
+      geom_bar(stat = "identity") +
+      scale_x_log10() +
+      theme_bw()
+    
   })
 
   output$spreadsheet <- renderDataTable({
