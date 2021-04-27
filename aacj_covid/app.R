@@ -122,6 +122,15 @@ STATE_OPTIONS <-
     unique(as.character(fullData$state[fullData$state != 'Puerto Rico'])),
     recursive = TRUE)
 
+# Pre conditions data
+
+pre_conditions_data <- read_csv("../data/conditions.csv") %>%
+  mutate_at(vars(data_as_of:end_date), lubridate::ymd) %>%
+  mutate_at(vars(group:age_group), as_factor) %>%
+  mutate_at(vars(covid_19_deaths, number_of_mentions), as.numeric) %>%
+  filter(group == "By Month",
+         !age_group == "Not stated") %>%
+  select(-group)
 
 ui <- fluidPage(
   titlePanel("ACCJ COVID-19 Shiny App"),
@@ -166,8 +175,28 @@ ui <- fluidPage(
     tabPanel(
       "Compare",  # Bivariate data analysis and statistical modeling
       sidebarLayout(
-        sidebarPanel(),
-        mainPanel()
+        sidebarPanel(
+          varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
+          varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions"),
+          selectInput("var4",label = "X OLS",
+                                  choices = names(pre_conditions_data),
+                                  selected = "covid_19_deaths"),
+          checkboxInput("log4", "Log_Transform?", value = FALSE, width = NULL),
+          selectInput("var5",label = "Y OLS",
+                      choices = names(pre_conditions_data),
+                      selected = "conditions"),
+          checkboxInput("log5", "Log_Transform?", value = FALSE, width = NULL),
+          checkboxInput("ols2", "Fit OLS?", value = FALSE, width = NULL)
+          # Still need to input the code in the server section for summary output.
+          # varSelectInput("option3", "AGE GRP:", data = pre_conditions_data %>% select_if(is.factor), selected = "age_group"),
+          # varSelectInput("option4", "STATE:", data = pre_conditions_data %>% select_if(is.factor), selected = "state"),
+          # selectizeInput('option2', 'Select variable 1', choices = c("choose" = "", levels(pre_conditions_data$condition))), 
+          # selectizeInput('option3', 'Select variable 2', choices = c("choose" = "", levels(pre_conditions_data$age_group))),
+          # selectizeInput('option4', 'Select variable 3', choices = c("choose" = "", levels(pre_conditions_data$state)))
+        ),
+        mainPanel(
+          plotOutput("plot"),
+        )
       )
     ),
     tabPanel(
@@ -474,6 +503,50 @@ server <- function(input, output, session) {
           geom_boxplot() + ggstance::geom_boxploth()
       }
     }
+  })
+  
+  # varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
+  # varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions")
+  output$plot <- renderPlot({
+    # generate plots based on variables selected above
+    
+    if (!!input$option2 == "age_group") {
+      pre_conditions_data %>%
+        ggplot(aes(x = !!input$option1, y = !!input$option2, fill = age_group)) +
+        geom_bar(stat = "identity", show.legend = FALSE) +
+        scale_x_log10() +
+        scale_fill_brewer(palette = "Blues") +
+        theme_gray()
+    } else if (!!input$option2 == "state") {
+      pre_conditions_data %>%
+      group_by(state) %>%
+        summarise(covid19_deaths = sum(covid_19_deaths)) %>%
+        mutate(state = fct_reorder(state, covid19_deaths)) %>%
+        ggplot(aes(covid19_deaths, state, fill = state)) +
+        geom_bar(stat = "identity", show.legend = FALSE) +
+        # scale_fill_brewer(palette = "Blues") +
+        theme_gray()
+    } else if (!!input$option2 == "condition") {
+      pre_conditions_data %>%
+      group_by(condition) %>%
+        summarise(covid19_deaths = sum(covid_19_deaths)) %>%
+        mutate(condition = fct_reorder(condition, covid19_deaths)) %>%
+        ggplot(aes(covid19_deaths, condition, fill = condition)) +
+        geom_bar(stat = "identity", show.legend = FALSE) +
+        # scale_fill_brewer(palette = "Blues") +
+        theme_gray()
+    } else if (!!input$option2 == "condition_group") {
+      pre_conditions_data %>%
+      group_by(condition_group) %>%
+        summarise(covid19_deaths = sum(covid_19_deaths)) %>%
+        mutate(condition_group = fct_reorder(condition_group, covid19_deaths)) %>%
+        ggplot(aes(covid19_deaths, condition_group, fill = condition_group)) +
+        geom_bar(stat = "identity", show.legend = FALSE) +
+        # scale_fill_brewer(palette = "Blues") +
+        theme_gray()
+    }
+   
+    
   })
 
   output$spreadsheet <- renderDataTable({
