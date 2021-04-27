@@ -12,6 +12,7 @@ library(tidyverse)
 library(jsonlite)
 library(usmap)
 library(scales)
+library(ggrepel)
 
 data(statepop)
 
@@ -296,10 +297,16 @@ server <- function(input, output, session) {
           scale_fill_viridis_c() ->
           plotData
       } else {
+        plotData <- mutate(plotData, state = fct_reorder(state, deaths))
+
         plotData %>%
-          mutate(state = fct_reorder(state, deaths)) %>%
           ggplot(aes(deaths, group, label = state)) +
           geom_col(aes(fill = deaths), show.legend = FALSE) +
+          geom_label_repel(data = filter(plotData, deaths > 0),
+                           position = position_stack(vjust = 0.5),
+                           segment.color = 'white',
+                           max.overlaps = 51,
+                           direction = 'y') +
           labs(title = str_c('Combined ', deathsTitle),
                x = 'Number of Deaths',
                y = NULL) +
