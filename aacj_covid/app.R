@@ -1,10 +1,3 @@
-#
-# Dataset documentation:
-#   https://data.cdc.gov/NCHS/Provisional-COVID-19-Death-Counts-by-Sex-Age-and-S/9bhg-hcku
-#   https://data.cdc.gov/Case-Surveillance/COVID-19-Case-Surveillance-Public-Use-Data/vbim-akqf
-#
-
-
 library(shiny)
 library(httr)
 library(keyring)
