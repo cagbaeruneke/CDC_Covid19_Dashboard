@@ -38,6 +38,8 @@ The purpose of this app is to provide available COVID-19 data and present in a w
 * `usmap`
 * `scales`
 * `ggrepel`
+* `ggstance`
+* `lubridate`
 
 
 ## Data sources
