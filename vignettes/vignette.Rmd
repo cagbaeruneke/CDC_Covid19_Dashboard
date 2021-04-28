@@ -28,18 +28,16 @@ The purpose of this app is to provide available COVID-19 data and present in a w
 
 ## Required packages
 
-[Describes required packages and versions used in the App]
-
-* `shiny`
-* `tidyverse`
-* `httr`
-* `keyring` (an API key for data.cdc.gov is also required)
-* `jsonlite`
-* `usmap`
-* `scales`
-* `ggrepel`
-* `ggstance`
-* `lubridate`
+* `shiny==1.6.0`
+* `tidyverse==1.31`
+* `httr==1.4.2`
+* `keyring==1.1.0` (an API key for data.cdc.gov is also required)
+* `jsonlite==1.7.2`
+* `usmap==0.5.2`
+* `scales==1.1.1`
+* `ggrepel==0.9.1`
+* `ggstance==0.3.5`
+* `lubridate==1.7.10`
 
 
 ## Data sources
