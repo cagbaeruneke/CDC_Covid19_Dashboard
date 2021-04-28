@@ -177,15 +177,15 @@ ui <- fluidPage(
         sidebarPanel(
           varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
           varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions"),
-          selectInput("var4",label = "X OLS",
-                                  choices = names(pre_conditions_data),
-                                  selected = "conditions"),
-          checkboxInput("log4", "Log_Transform?", value = FALSE, width = NULL),
-          selectInput("var5",label = "Y OLS",
-                      choices = names(pre_conditions_data),
-                      selected = "covid_19_deaths"),
-          checkboxInput("log5", "Log_Transform?", value = FALSE, width = NULL),
-          checkboxInput("ols2", "Fit OLS?", value = FALSE, width = NULL)
+          # selectInput("var4",label = "X OLS",
+          #                         choices = names(pre_conditions_data),
+          #                         selected = "conditions"),
+          # checkboxInput("log4", "Log_Transform?", value = FALSE, width = NULL),
+          # selectInput("var5",label = "Y OLS",
+          #             choices = names(pre_conditions_data),
+          #             selected = "covid_19_deaths"),
+          # checkboxInput("log5", "Log_Transform?", value = FALSE, width = NULL),
+          # checkboxInput("ols2", "Fit OLS?", value = FALSE, width = NULL)
           # Still need to input the code in the server section for summary output.
           # varSelectInput("option3", "AGE GRP:", data = pre_conditions_data %>% select_if(is.factor), selected = "age_group"),
           # varSelectInput("option4", "STATE:", data = pre_conditions_data %>% select_if(is.factor), selected = "state"),
@@ -528,7 +528,7 @@ server <- function(input, output, session) {
         theme_gray()
     } else if (!!input$option2 == "state") {
       pre_conditions_data %>%
-      group_by(state) %>%
+        group_by(state) %>%
         summarise(covid19_deaths = sum(covid_19_deaths)) %>%
         mutate(state = fct_reorder(state, covid19_deaths)) %>%
         ggplot(aes(covid19_deaths, state, fill = state)) +
@@ -537,7 +537,7 @@ server <- function(input, output, session) {
         theme_gray()
     } else if (!!input$option2 == "condition") {
       pre_conditions_data %>%
-      group_by(condition) %>%
+        group_by(condition) %>%
         summarise(covid19_deaths = sum(covid_19_deaths)) %>%
         mutate(condition = fct_reorder(condition, covid19_deaths)) %>%
         ggplot(aes(covid19_deaths, condition, fill = condition)) +
@@ -546,7 +546,7 @@ server <- function(input, output, session) {
         theme_gray()
     } else if (!!input$option2 == "condition_group") {
       pre_conditions_data %>%
-      group_by(condition_group) %>%
+        group_by(condition_group) %>%
         summarise(covid19_deaths = sum(covid_19_deaths)) %>%
         mutate(condition_group = fct_reorder(condition_group, covid19_deaths)) %>%
         ggplot(aes(covid19_deaths, condition_group, fill = condition_group)) +
@@ -554,91 +554,6 @@ server <- function(input, output, session) {
         # scale_fill_brewer(palette = "Blues") +
         theme_gray()
     }
-
-
-  })
-
-  output$plot <- renderPlot({
-
-    if (is.numeric(pre_conditions_data[,input$var4])&&is.numeric(pre_conditions_data[,input$var5])) {
-      p4 <- ggplot(pre_conditions_data, aes(x = .data[[input$var4]], y = .data[[input$var5]])) +
-        geom_point()
-      if(!input$log4 && !input$log5)
-      {
-        p4
-      }
-      else if(input$log4 && !input$log5)
-      {
-        p4<- p4 + scale_x_log10()
-        p4
-      }
-      else if(!input$log4 && input$log5)
-      {
-        p4<- p4 + scale_y_log10()
-        p4
-      }
-      else
-      {
-        p4<- p4 + scale_x_log10() + scale_y_log10()
-        p4
-      }
-
-      if(input$ols2)
-      {
-        p4 <- p4 +geom_smooth(method='lm', formula= y~x, se=FALSE)
-        p4
-      }
-      else
-      {
-        p4
-      }
-
-    }
-    else if (!is.numeric(pre_conditions_data[,input$var4])&&is.numeric(pre_conditions_data[,input$var5])&&!input$log4 && input$log5) {
-      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) +
-        geom_boxplot() + scale_y_log10()
-    }
-    else if (is.numeric(pre_conditions_data[,input$var4])&&!is.numeric(pre_conditions_data[,input$var5])&&input$log4 && !input$log5) {
-      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) +
-        geom_boxplot() + scale_x_log10() + ggstance::geom_boxploth()
-    }
-    else if (!is.numeric(pre_conditions_data[,input$var4])&&is.numeric(pre_conditions_data[,input$var5])) {
-      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) +
-        geom_boxplot()
-    }
-    else if (is.numeric(pre_conditions_data[,input$var4])&&!is.numeric(pre_conditions_data[,input$var5])) {
-      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) +
-        geom_boxplot() + ggstance::geom_boxploth()
-    }
-
-    else if (!is.numeric(pre_conditions_data[,input$var4])&&!is.numeric(pre_conditions_data[,input$var5])) {
-      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) +
-        geom_jitter()
-    }
-  })
-
-  output$lm_results <- renderPrint({
-    if(is.numeric(pre_conditions_data[,input$var4])&&is.numeric(pre_conditions_data[,input$var5])&&input$ols2) {
-      lmout <- lm(formula = pre_conditions_data[[input$var5]]~pre_conditions_data[[input$var4]], data = pre_conditions_data)
-      print(summary(lmout))
-      if (!input$log4 && !input$log5) {
-        lmout <- lm(formula = pre_conditions_data[[input$var5]]~pre_conditions_data[[input$var4]], data = pre_conditions_data)
-        print(summary(lmout))
-      }
-    }
-    else if(is.numeric(pre_conditions_data[,input$var4])&&is.numeric(pre_conditions_data[,input$var5])&&input$log4 && !input$log5) {
-      lmout <- lm(formula = pre_conditions_data[[input$var5]]~log(pre_conditions_data[[input$var4]]), data = pre_conditions_data)
-      print(summary(lmout))
-    }
-    else if(is.numeric(pre_conditions_data[,input$var4])&&is.numeric(pre_conditions_data[,input$var5])&&!input$log4 && input$log5) {
-      lmout <- lm(formula = log(pre_conditions_data[[input$var5]])~pre_conditions_data[[input$var4]], data = pre_conditions_data)
-      print(summary(lmout))
-    }
-    else if (is.numeric(pre_conditions_data[,input$var4])&&is.numeric(pre_conditions_data[,input$var5])&&input$log4 && input$log5) {
-      lmout <- lm(formula = log(pre_conditions_data[[input$var5]])~log(pre_conditions_data[[input$var4]]), data = pre_conditions_data)
-      print(summary(lmout))
-    }
-
   })
 
   output$spreadsheet1 <- renderDataTable({
