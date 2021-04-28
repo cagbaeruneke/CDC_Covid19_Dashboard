@@ -226,8 +226,17 @@ ui <- fluidPage(
       )
     ),
     tabPanel(
-      "Spreadsheet",  # Datasets
-      dataTableOutput('spreadsheet')
+      "Raw Data",
+      tabsetPanel(
+        tabPanel(
+          "Death Counts",
+          dataTableOutput("spreadsheet1")
+        ),
+        tabPanel(
+          "Preconditions",
+          dataTableOutput("spreadsheet2")
+        )
+      )
     )
   )
 )
@@ -548,11 +557,11 @@ server <- function(input, output, session) {
 
 
   })
-  
+
   output$plot <- renderPlot({
-    
+
     if (is.numeric(pre_conditions_data[,input$var4])&&is.numeric(pre_conditions_data[,input$var5])) {
-      p4 <- ggplot(pre_conditions_data, aes(x = .data[[input$var4]], y = .data[[input$var5]])) + 
+      p4 <- ggplot(pre_conditions_data, aes(x = .data[[input$var4]], y = .data[[input$var5]])) +
         geom_point()
       if(!input$log4 && !input$log5)
       {
@@ -573,7 +582,7 @@ server <- function(input, output, session) {
         p4<- p4 + scale_x_log10() + scale_y_log10()
         p4
       }
-      
+
       if(input$ols2)
       {
         p4 <- p4 +geom_smooth(method='lm', formula= y~x, se=FALSE)
@@ -583,31 +592,31 @@ server <- function(input, output, session) {
       {
         p4
       }
-      
+
     }
     else if (!is.numeric(pre_conditions_data[,input$var4])&&is.numeric(pre_conditions_data[,input$var5])&&!input$log4 && input$log5) {
-      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) + 
+      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) +
         geom_boxplot() + scale_y_log10()
     }
     else if (is.numeric(pre_conditions_data[,input$var4])&&!is.numeric(pre_conditions_data[,input$var5])&&input$log4 && !input$log5) {
-      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) + 
-        geom_boxplot() + scale_x_log10() + ggstance::geom_boxploth() 
+      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) +
+        geom_boxplot() + scale_x_log10() + ggstance::geom_boxploth()
     }
     else if (!is.numeric(pre_conditions_data[,input$var4])&&is.numeric(pre_conditions_data[,input$var5])) {
-      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) + 
+      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) +
         geom_boxplot()
     }
     else if (is.numeric(pre_conditions_data[,input$var4])&&!is.numeric(pre_conditions_data[,input$var5])) {
-      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) + 
+      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) +
         geom_boxplot() + ggstance::geom_boxploth()
     }
-    
+
     else if (!is.numeric(pre_conditions_data[,input$var4])&&!is.numeric(pre_conditions_data[,input$var5])) {
-      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) + 
+      ggplot(pre_conditions_data, aes(x=.data[[input$var4]], y=.data[[input$var5]])) +
         geom_jitter()
     }
   })
-  
+
   output$lm_results <- renderPrint({
     if(is.numeric(pre_conditions_data[,input$var4])&&is.numeric(pre_conditions_data[,input$var5])&&input$ols2) {
       lmout <- lm(formula = pre_conditions_data[[input$var5]]~pre_conditions_data[[input$var4]], data = pre_conditions_data)
@@ -629,11 +638,14 @@ server <- function(input, output, session) {
       lmout <- lm(formula = log(pre_conditions_data[[input$var5]])~log(pre_conditions_data[[input$var4]]), data = pre_conditions_data)
       print(summary(lmout))
     }
-    
-  }) 
-  
-  output$spreadsheet <- renderDataTable({
+
+  })
+
+  output$spreadsheet1 <- renderDataTable({
     fullData
+  })
+  output$spreadsheet2 <- renderDataTable({
+    pre_conditions_data
   })
 }
 
