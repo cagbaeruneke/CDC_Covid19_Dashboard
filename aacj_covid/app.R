@@ -83,10 +83,6 @@ loadData <- function(dataSetID, keyColumn) {
 }
 
 
-
-
-
-
 fullData <- loadData('9bhg-hcku', 'data_as_of')
 fullData <- fullData %>%
   mutate(start_date = str_sub(start_date, 1, 10),
@@ -115,7 +111,6 @@ STATE_OPTIONS <-
     recursive = TRUE)
 
 # Pre conditions data
-
 pre_conditions_data <- read_csv("../data/conditions.csv") %>%
   mutate_at(vars(data_as_of:end_date), lubridate::ymd) %>%
   mutate_at(vars(group:age_group), as_factor) %>%
@@ -123,6 +118,7 @@ pre_conditions_data <- read_csv("../data/conditions.csv") %>%
   filter(group == "By Month",
          !age_group == "Not stated") %>%
   select(-group)
+
 
 ui <- fluidPage(
   titlePanel("ACCJ COVID-19 Shiny App"),
@@ -233,6 +229,7 @@ ui <- fluidPage(
     )
   )
 )
+
 
 server <- function(input, output, session) {
   mapData <- reactive({
@@ -556,5 +553,6 @@ server <- function(input, output, session) {
     pre_conditions_data
   })
 }
+
 
 shinyApp(ui, server)
