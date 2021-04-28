@@ -190,7 +190,7 @@ ui <- fluidPage(
           # Still need to input the code in the server section for summary output.
           # varSelectInput("option3", "AGE GRP:", data = pre_conditions_data %>% select_if(is.factor), selected = "age_group"),
           # varSelectInput("option4", "STATE:", data = pre_conditions_data %>% select_if(is.factor), selected = "state"),
-          # selectizeInput('option2', 'Select variable 1', choices = c("choose" = "", levels(pre_conditions_data$condition))), 
+          # selectizeInput('option2', 'Select variable 1', choices = c("choose" = "", levels(pre_conditions_data$condition))),
           # selectizeInput('option3', 'Select variable 2', choices = c("choose" = "", levels(pre_conditions_data$age_group))),
           # selectizeInput('option4', 'Select variable 3', choices = c("choose" = "", levels(pre_conditions_data$state)))
         ),
@@ -200,17 +200,19 @@ ui <- fluidPage(
       )
     ),
     tabPanel(
-      "Locate",  # Maps
+      'Explore by State',
       fluidRow(
         column(
           4,
           selectInput('deaths', 'Cause(s) of Death', DEATH_COLUMN_OPTIONS,
                       selected = 'COVID-19 Deaths'),
-          selectInput('group', 'Group', GROUP_OPTIONS, selected = 'By Total'),
-          selectInput('state', 'State', STATE_OPTIONS, selected = 'All States'),
           selectInput('sex', 'Sex', SEX_OPTIONS, selected = 'All Sexes'),
           selectInput('age_group', 'Age Group', AGE_OPTIONS,
-                      selected = 'All Ages')
+                      selected = 'All Ages'),
+          selectInput('state', 'State', STATE_OPTIONS,
+                      selected = 'All States'),
+          selectInput('group', 'Grouping', GROUP_OPTIONS,
+                      selected = 'By Total')
         ),
         column(
           8,
@@ -294,8 +296,8 @@ server <- function(input, output, session) {
              x = 'Year',
              y = 'Number of Deaths') +
         scale_y_continuous(labels = label_comma()) +
-        scale_fill_viridis_d() ->
-        plotData
+        scale_fill_viridis_d(option = 'B') ->
+        plot
     } else if (input$group == 'By Month') {
       plotData %>%
         mutate(monthYear = str_c(year, '-',
@@ -306,8 +308,8 @@ server <- function(input, output, session) {
              x = 'Month',
              y = 'Number of Deaths') +
         scale_y_continuous(labels = label_comma()) +
-        scale_fill_viridis_d() ->
-        plotData
+        scale_fill_viridis_d(option = 'B') ->
+        plot
     } else {
       if (input$state != 'All States') {
         plotData %>%
@@ -324,11 +326,10 @@ server <- function(input, output, session) {
           scale_x_continuous(breaks = NULL, labels = NULL) +
           scale_y_discrete(breaks = NULL, labels = NULL) +
           scale_fill_viridis_c() ->
-          plotData
+          plot
       } else {
-        plotData <- mutate(plotData, state = fct_reorder(state, deaths))
-
         plotData %>%
+          mutate(plotData, state = fct_reorder(state, deaths)) %>%
           ggplot(aes(deaths, group, label = state)) +
           geom_col(aes(fill = deaths), show.legend = FALSE) +
           geom_label_repel(data = filter(plotData, deaths > 0),
@@ -342,11 +343,11 @@ server <- function(input, output, session) {
           scale_x_continuous(labels = label_comma()) +
           scale_y_discrete(breaks = NULL, labels = NULL) +
           scale_fill_viridis_c() ->
-          plotData
+          plot
       }
     }
 
-    plotData +
+    plot +
       theme_bw() %>%
       return()
   })
@@ -504,12 +505,12 @@ server <- function(input, output, session) {
       }
     }
   })
-  
+
   # varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
   # varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions")
   output$plot <- renderPlot({
     # generate plots based on variables selected above
-    
+
     if (!!input$option2 == "age_group") {
       pre_conditions_data %>%
         ggplot(aes(x = !!input$option1, y = !!input$option2, fill = age_group)) +
@@ -545,8 +546,8 @@ server <- function(input, output, session) {
         # scale_fill_brewer(palette = "Blues") +
         theme_gray()
     }
-   
-    
+
+
   })
 
   output$spreadsheet <- renderDataTable({
