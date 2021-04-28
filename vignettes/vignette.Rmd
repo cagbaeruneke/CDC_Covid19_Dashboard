@@ -1,0 +1,77 @@
+---
+title: "COVID-19 Informational Shiny App"
+author:
+  - Adim Okwudishu (@adim7)
+  - Chidi Agbaeruneke (@cagbaeruneke)
+  - Corey Hutton (@cahutton)
+  - Jerome Okeke (@Fubu83)
+date: 'April 29, 2021'
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{COVID-19 Informational Shiny App}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+## Use case
+
+[Describes the problem the App is designed to solve and by whom]
+
+The COVID-19 pandemic, caused by the coronavirus SARS-CoV-2, has led to the global instability of economies, governments, and life as we once knew. Its pervasiveness, exceptional rate of transmission, and virulence are key aspects of why this virus has led to unprecedented levels of fatalities and disruption of everyday life. COVID-19 has left an indelible impact on the world, having entered the top ten of history's worst pandemics, totaling over 2.7 million deaths worldwide.
+
+A phenomenon of this scale necessitates constant surveillance and data analysis to mitigate further fatalities. To that end, a COVID-19 Informational Shiny App could synthesize the troves of data surrounding this pandemic and, among other possibilities, inform users of dispersion across geographic areas, project future mortality rates, and track caseloads.
+
+With the U.S. battling the effects of COVID-19 and given the numerous phases the pandemic has been through, there are many individuals who would like access to COVID-19 and related information that may affect them, their families, and their communities. Information being disseminated about COVID-19 via news outlets and other social media are either too complex for the average individual to digest or marred with sociopolitical sentiment that stands to skew that information with bias.
+
+The purpose of this app is to provide available COVID-19 data and present in a way that offers users concise and valuable answers to everyday questions concerning their safety.
+
+
+## Required packages
+
+[Describes required packages and versions used in the App]
+
+* `shiny`
+* `tidyverse`
+* `httr`
+* `keyring` (an API key for data.cdc.gov is also required)
+* `jsonlite`
+* `usmap`
+* `scales`
+* `ggrepel`
+
+
+## Data sources
+
+[Identifies the default data source.]
+
+All data is from [https://data.cdc.gov](data.cdc.gov), the open data portal of the Centers for Disease Control and Prevention (CDC) and its National Center for Health Statistics (NCHS).
+
+* Provisional COVID-19 Death Counts by Sex, Age, and State: [https://data.cdc.gov/NCHS/Provisional-COVID-19-Death-Counts-by-Sex-Age-and-S/9bhg-hcku]()
+* Case Surveillance Public Use Data: [https://data.cdc.gov/Case-Surveillance/COVID-19-Case-Surveillance-Public-Use-Data/vbim-akqf]()
+* Conditions contributing to deaths involving coronavirus disease 2019 (COVID-19), by age group and state, United States.: [https://data.cdc.gov/NCHS/Conditions-contributing-to-deaths-involving-corona/hk9y-quqm]()
+
+
+## Data structure
+
+[Describes the general structure of the data.]
+
+
+## EDA walkthrough
+
+[inputs, controls, and outputs]
+[Briefly walks through the Use Case describing how to solve the problem and interpret results]
+
+
+## Statistical analysis walkthrough
+
+[inputs, controls, and outputs]
+[Briefly Walks through the Use Case describing how to solve the problem and interpret results]
+
+
+## References
+
+[At least three relevant to the App]
+
+* 
+* 
+* Pew Research Center, December, 2020, “The Changing Geography of COVID-19 in the U.S.” <[https://www.pewresearch.org/politics/2020/12/08/the-changing-geography-of-covid-19-in-the-u-s/]()>
