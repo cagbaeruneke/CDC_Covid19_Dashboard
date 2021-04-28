@@ -96,8 +96,7 @@ loadData <- function(dataSetID, keyColumn) {
 
 fullData <- loadData('9bhg-hcku', 'data_as_of')
 fullData <- fullData %>%
-  mutate(data_as_of = str_sub(data_as_of, 1, 10),
-         start_date = str_sub(start_date, 1, 10),
+  mutate(start_date = str_sub(start_date, 1, 10),
          end_date = str_sub(end_date, 1, 10),
          footnote = NULL,
          data_as_of = NULL) %>%
@@ -109,11 +108,11 @@ fullData <- fullData %>%
 AGE_OPTIONS <- unique(fullData$age_group)
 DEATH_COLUMN_OPTIONS <- c(
   'COVID-19 Deaths' = 'covid_19_deaths',
-  'Total Deaths' = 'total_deaths',
+  'Influenza Deaths' = 'influenza_deaths',
   'Pneumonia Deaths' = 'pneumonia_deaths',
   'Pneumonia & COVID-19 Deaths' = 'pneumonia_and_covid_19_deaths',
-  'Influenza Deaths' = 'influenza_deaths',
-  'Pneumonia, Influenza, or COVID-19 Deaths' = 'pneumonia_influenza_or_covid'
+  'Pneumonia, Influenza, or COVID-19 Deaths' = 'pneumonia_influenza_or_covid',
+  'Total Deaths' = 'total_deaths'
 )
 GROUP_OPTIONS <- unique(fullData$group)
 SEX_OPTIONS <- unique(fullData$sex)
