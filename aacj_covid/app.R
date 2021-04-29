@@ -98,6 +98,24 @@ fullData <- fullData %>%
   mutate_at(vars(matches("deaths|covid")), as.numeric) %>%
   filter(state != "United States")
 
+fullData_EDA <- fullData %>% 
+  mutate(month = as.numeric(month),
+         year = as.numeric(year)) %>% 
+  filter(group == "By Month",
+         !is.na(month),
+         !is.na(year)) %>% 
+  mutate(month = as_factor(month),
+         year = as_factor(year)) %>% 
+  select(-c(group, start_date, end_date))
+
+fullData_EDA$year <- recode_factor(fullData_EDA$year, `1`="2020", `2`="2021")
+fullData_EDA$month <- recode_factor(fullData_EDA$month, `1`="Jan", `2`="Feb", `3`="Mar", `4`="Apr", `5`="May", `6`="Jun", `7`="Jul", `8`="Aug", `9`="Sep", `10`="Oct", `11`="Nov", `12`="Dec")
+
+fullData_EDA_1 <- fullData_EDA %>% 
+  select(-c(state,sex,age_group))
+
+fullData_EDA_1$year <- recode_factor(fullData_EDA$year, `1`="2020", `2`="2021")
+
 AGE_OPTIONS <- unique(fullData$age_group)
 DEATH_COLUMN_OPTIONS <- c(
   'COVID-19 Deaths' = 'covid_19_deaths',
@@ -132,7 +150,7 @@ ui <- fluidPage(
       fluidRow(
         column(5,
                sidebarPanel(
-                 selectInput(inputId = "var1", label = "Variable (Univariate)", choices = names(fullData), selected = "covid_19_deaths"),
+                 selectInput(inputId = "var1", label = "Variable (Univariate)", choices = names(fullData_EDA_1), selected = "covid_19_deaths"),
                  checkboxInput(inputId = "log1", label = "Log_Transform?", value = FALSE, width = NULL),
                  sliderInput(inputId = "bins1", label = "Bins", min = 1, max = 100, value = 50),
                )
@@ -147,14 +165,14 @@ ui <- fluidPage(
         column(5,
                sidebarPanel(
                  selectInput("var2",label = "X Variable (Bivariate)",
-                             choices = names(fullData),
+                             choices = names(fullData_EDA),
                              selected = "age_group"),
                  checkboxInput("log2", "Log_Transform?", value = FALSE, width = NULL),
                  selectInput("var3",label = "Y Variable (Bivariate)",
-                             choices = names(fullData),
+                             choices = names(fullData_EDA),
                              selected = "covid_19_deaths"),
                  checkboxInput("log3", "Log_Transform?", value = FALSE, width = NULL),
-                 checkboxInput("ols1", "Trendline", value = FALSE, width = NULL),
+                 checkboxInput("trend1", "Trendline", value = FALSE, width = NULL),
                )
         ),
         column(7,
@@ -354,30 +372,34 @@ server <- function(input, output, session) {
   })
 
   output$plot1 <- renderPlot({
-
-    if (is.numeric(fullData[,input$var1])) {
-
+    
+    if (is.numeric(fullData_EDA_1[,input$var1])) {
+      
       if(!input$log1)
       {
-        ggplot(fullData, aes(x = .data[[input$var1]])) +
-          geom_histogram(bins = input$bins1)
+        ggplot(fullData_EDA_1, aes(x = .data[[input$var1]])) +
+          geom_histogram(bins = input$bins1,aes(fill=..count..), show.legend = FALSE) +
+          scale_fill_gradient("Count", low="green", high="red")
       }
       else
       {
-        ggplot(fullData, aes(x = .data[[input$var1]]))+
-          geom_histogram(bins = input$bins1) +
-          scale_x_log10()
+        ggplot(fullData_EDA_1, aes(x = .data[[input$var1]]))+
+          geom_histogram(bins = input$bins1,aes(fill=..count..), show.legend = FALSE) +
+          scale_x_log10() +
+          scale_fill_gradient("Count", low="green", high="red")
       }
     }
-
+    
     else if (input$var1 == "state" || input$var1 == "age_group") {
-      ggplot(fullData, aes(x = .data[[input$var1]])) +
-        geom_bar() +
-        coord_flip()
+      ggplot(fullData_EDA_1, aes(x = .data[[input$var1]])) +
+        geom_bar(aes(fill=..count..), show.legend = FALSE) +
+        coord_flip() +
+        scale_fill_gradient("Count", low="darkgreen", high="darkred")
     }
     else {
-      ggplot(fullData, aes(x = .data[[input$var1]])) +
-        geom_bar()
+      ggplot(fullData_EDA_1, aes(x = .data[[input$var1]])) +
+        geom_bar(aes(fill=..count..), show.legend = FALSE) +
+        scale_fill_gradient("Count", low="darkgreen", high="darkred")
     }
   })
 
@@ -406,7 +428,7 @@ server <- function(input, output, session) {
         p2
       }
 
-      if(input$ols1)
+      if(input$trend1)
       {
         p2 <- p2 +geom_smooth(method='loess', formula = y~x, se=FALSE)
         p2
