@@ -28,21 +28,19 @@ The purpose of this app is to provide available COVID-19 data and present in a w
 
 ## Required packages
 
-[Describes required packages and versions used in the App]
-
-* `shiny`
-* `tidyverse`
-* `httr`
-* `keyring` (an API key for data.cdc.gov is also required)
-* `jsonlite`
-* `usmap`
-* `scales`
-* `ggrepel`
+* `shiny==1.6.0`
+* `tidyverse==1.31`
+* `httr==1.4.2`
+* `keyring==1.1.0` (an API key for data.cdc.gov is also required)
+* `jsonlite==1.7.2`
+* `usmap==0.5.2`
+* `scales==1.1.1`
+* `ggrepel==0.9.1`
+* `ggstance==0.3.5`
+* `lubridate==1.7.10`
 
 
 ## Data sources
-
-[Identifies the default data source.]
 
 All data is from [https://data.cdc.gov](data.cdc.gov), the open data portal of the Centers for Disease Control and Prevention (CDC) and its National Center for Health Statistics (NCHS).
 
@@ -52,6 +50,30 @@ All data is from [https://data.cdc.gov](data.cdc.gov), the open data portal of t
 
 
 ## Data structure
+
+### Provisional COVID-19 Death Counts by Sex, Age, and State
+
+This data set contains rows organized around three different groupings: "By Total", "By Year", and "By Month". Within each of these, data is broken down by state, sex, and age group. For each of state, sex, and age group, there are also "All States", "All Sexes", and "All Age Group" categories.
+
+Each row contains:
+* An as-of date for the dataset
+* A start date and end date
+* Columns for the aforementioned grouping, state, sex, and age group categories
+* Counts for the following categories of deaths:
+** Total deaths
+** One column each for deaths due to only one of COVID-19, influenza, and pneumonia
+** One column for deaths due to both COVID-19 and pneumonia
+** One column for deaths due to _any of_ COVID-19, influenza, or pneumonia
+
+Rows corresponding to the "By Year" or "By Month" groupings also contain year or year and month values, respectively.
+
+
+### Case Surveillance Public Use Data
+
+[Describes the general structure of the data.]
+
+
+### Conditions contributing to deaths involving coronavirus disease 2019 (COVID-19), by age group and state, United States.
 
 [Describes the general structure of the data.]
 

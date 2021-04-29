@@ -68,19 +68,20 @@
 <h2>Required packages</h2>
 <p>[Describes required packages and versions used in the App]</p>
 <ul>
-<li><code>shiny</code></li>
-<li><code>tidyverse</code></li>
-<li><code>httr</code></li>
-<li><code>keyring</code> (an API key for data.cdc.gov is also required)</li>
-<li><code>jsonlite</code></li>
-<li><code>usmap</code></li>
-<li><code>scales</code></li>
-<li><code>ggrepel</code></li>
+<li><code>shiny==1.6.0</code></li>
+<li><code>tidyverse==1.31</code></li>
+<li><code>httr==1.4.2</code></li>
+<li><code>keyring==1.1.0</code> (an API key for data.cdc.gov is also required)</li>
+<li><code>jsonlite==1.7.2</code></li>
+<li><code>usmap==0.5.2</code></li>
+<li><code>scales==1.1.1</code></li>
+<li><code>ggrepel==0.9.1</code></li>
+<li><code>ggstance==0.3.5</code></li>
+<li><code>lubridate==1.7.10</code></li>
 </ul>
 </div>
 <div id="data-sources" class="section level2">
 <h2>Data sources</h2>
-<p>[Identifies the default data source.]</p>
 <p>All data is from <a href="data.cdc.gov">https://data.cdc.gov</a>, the open data portal of the Centers for Disease Control and Prevention (CDC) and its National Center for Health Statistics (NCHS).</p>
 <ul>
 <li>Provisional COVID-19 Death Counts by Sex, Age, and State: <a href>https://data.cdc.gov/NCHS/Provisional-COVID-19-Death-Counts-by-Sex-Age-and-S/9bhg-hcku</a></li>
@@ -90,7 +91,20 @@
 </div>
 <div id="data-structure" class="section level2">
 <h2>Data structure</h2>
+<div id="provisional-covid-19-death-counts-by-sex-age-and-state" class="section level3">
+<h3>Provisional COVID-19 Death Counts by Sex, Age, and State</h3>
+<p>This data set contains rows organized around three different groupings: “By Total”, “By Year”, and “By Month”. Within each of these, data is broken down by state, sex, and age group. For each of state, sex, and age group, there are also “All States”, “All Sexes”, and “All Age Group” categories.</p>
+<p>Each row contains: * An as-of date for the dataset * A start date and end date * Columns for the aforementioned grouping, state, sex, and age group categories * Counts for the following categories of deaths: ** Total deaths ** One column each for deaths due to only one of COVID-19, influenza, and pneumonia ** One column for deaths due to both COVID-19 and pneumonia ** One column for deaths due to <em>any of</em> COVID-19, influenza, or pneumonia</p>
+<p>Rows corresponding to the “By Year” or “By Month” groupings also contain year or year and month values, respectively.</p>
+</div>
+<div id="case-surveillance-public-use-data" class="section level3">
+<h3>Case Surveillance Public Use Data</h3>
 <p>[Describes the general structure of the data.]</p>
+</div>
+<div id="conditions-contributing-to-deaths-involving-coronavirus-disease-2019-covid-19-by-age-group-and-state-united-states." class="section level3">
+<h3>Conditions contributing to deaths involving coronavirus disease 2019 (COVID-19), by age group and state, United States.</h3>
+<p>[Describes the general structure of the data.]</p>
+</div>
 </div>
 <div id="eda-walkthrough" class="section level2">
 <h2>EDA walkthrough</h2>
