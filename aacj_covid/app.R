@@ -740,6 +740,9 @@ server <- function(input, output, session) {
   output$spreadsheet2 <- renderDataTable({
     pre_conditions_data
   })
+  output$spreadsheet3 <- renderDataTable({
+    covid_surveillance_data
+  })
 }
 
 shinyApp(ui, server)
