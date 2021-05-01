@@ -160,6 +160,62 @@ pre_conditions_data <- read_csv("../data/conditions.csv") %>%
          !age_group == "Not stated") %>%
   select(-group)
 
+# Surveillance data
+covid_surveillance_data <- read_csv("../data/covid_surveillance_df.rds") %>%
+  as_tibble() %>%
+  mutate_at(vars(current_status:medcond_yn), as_factor)
+
+# Create recipe to up sample imbalanced variables
+covid_surveillance <- recipes::recipe(~., data = covid_surveillance_data) %>%
+  themis::step_upsample(death_yn) %>%
+  themis::step_upsample(hosp_yn) %>%
+  themis::step_upsample(icu_yn) %>%
+  themis::step_upsample(medcond_yn) %>%
+  themis::step_upsample(current_status)
+
+# Prep model df
+covid_surveillance %>%
+  recipes::prep() %>%
+  recipes::juice() -> covid_surveillance
+
+library(rsample)
+set.seed(123)
+# Create a split object
+modeldf_split <- rsample::initial_split(covid_surveillance_data, prop = 0.70)
+# Build training data set
+model_training <- modeldf_split %>% 
+  training()
+# Build testing data set
+model_test <- modeldf_split %>% 
+  testing()
+
+# training models
+train_death_model <- glm(death_yn ~.,family=binomial(link='logit'), data = model_training %>% select(-hosp_yn, -icu_yn))
+train_hosp_model <- glm(hosp_yn ~.,family=binomial(link='logit'), data = model_training %>% select(-death_yn, -icu_yn))
+train_icu_model <- glm(icu_yn ~.,family=binomial(link='logit'), data = model_training %>% select(-hosp_yn, -death_yn))
+
+# Performance Metrics
+# Pseudo R-squared 
+death_model_pr2 = pscl::pR2(train_death_model)["McFadden"]
+hosp_model_pr2 = pscl::pR2(train_hosp_model)["McFadden"]
+icu_model_pr2 = pscl::pR2(train_icu_model)["McFadden"]
+
+#testing models
+test_death_pred <- predict(train_death_model, model_test, type = "response")
+test_hosp_pred <- predict(train_hosp_model, model_test, type = "response")
+test_icu_pred <- predict(train_icu_model, model_test, type = "response")
+
+# Performance Metrics
+# Confusion Matrix
+death_conMat = table(model_test$death_yn, test_death_pred > 0.5) %>% prop.table() %>% round(3)
+hosp_conMat = table(model_test$hosp_yn, test_hosp_pred > 0.5) %>% prop.table() %>% round(3)
+icu_conMat = table(model_test$icu_yn, test_icu_pred > 0.5) %>% prop.table() %>% round(3)
+
+
+# Prediction on generated df
+# death_pred <- predict(train_death_model, new.df, type = "response")
+# hosp_pred <- predict(train_hosp_model, new.df, type = "response")
+# icu_pred <- predict(train_icu_model, new.df, type = "response")
 ui <- fluidPage(
   titlePanel("ACCJ COVID-19 Shiny App"),
   tabsetPanel(
