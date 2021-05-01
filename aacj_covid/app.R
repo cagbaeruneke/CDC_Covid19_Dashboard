@@ -345,6 +345,10 @@ ui <- fluidPage(
         tabPanel(
           "Preconditions",
           dataTableOutput("spreadsheet2")
+        ),
+        tabPanel(
+          "Surveillance",
+          dataTableOutput("spreadsheet3")
         )
       )
     )
