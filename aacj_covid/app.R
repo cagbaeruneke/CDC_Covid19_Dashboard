@@ -230,18 +230,52 @@ ui <- fluidPage(
     ),
     tabPanel(
       "Compare",  # Bivariate data analysis and statistical modeling
-      sidebarLayout(
-        sidebarPanel(
-          varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
-          varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions"),
-          # varSelectInput("option3", "AGE GRP:", data = pre_conditions_data %>% select_if(is.factor), selected = "age_group"),
-          # varSelectInput("option4", "STATE:", data = pre_conditions_data %>% select_if(is.factor), selected = "state"),
-          # selectizeInput('option2', 'Select variable 1', choices = c("choose" = "", levels(pre_conditions_data$condition))), 
-          # selectizeInput('option3', 'Select variable 2', choices = c("choose" = "", levels(pre_conditions_data$age_group))),
-          # selectizeInput('option4', 'Select variable 3', choices = c("choose" = "", levels(pre_conditions_data$state)))
+      fluidRow(
+        column(5,
+               sidebarPanel(
+                 varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
+                 varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions"),
+               )
         ),
-        mainPanel(
-          plotOutput("plot"),
+        column(7,
+               mainPanel(
+                 plotOutput("plot"),
+               )
+        )
+      ),
+      br(),
+      br(),
+      fluidRow(
+        column(5,
+               sidebarPanel(
+                 selectizeInput('option1', 'Gender', choices = levels(covid_surveillance_data$sex)),
+                 selectizeInput('option2', 'Age Group', choices = levels(covid_surveillance_data$age_group)),
+                 selectizeInput('option3', 'Race/Ethnicity', choices = levels(covid_surveillance_data$race_ethnicity_combined)),
+                 selectizeInput('option4', 'Status', choices = levels(covid_surveillance_data$current_status)),
+                 selectizeInput('option5', 'Medical Condition', choices = levels(covid_surveillance_data$medcond_yn)),
+                 radioButtons('option6', 'Risk Models', choices = c("Death", "Hospital", "ICU"), selected = "Death"),
+                 actionButton('option7', 'Risk', icon = icon("bullseye"), class = "btn-success"),
+                 p("Click here to run risk model"),
+                 br(),
+                 br(),
+                 p("McFadden's Log Likelihood"),
+                 textOutput("pseudo_r2"),
+                 br(),
+                 br(),
+                 p("Probable Risk with Exposure"),
+                 textOutput("Chances"),
+                 br(),
+                 br(),
+                 p("Confusion Matrix"),
+                 verbatimTextOutput("Conf_Mat")
+                 
+               )
+        ),
+        column(7,
+               mainPanel(
+                 plotOutput("rocPlot"),
+                 
+               )
         )
       )
     ),
