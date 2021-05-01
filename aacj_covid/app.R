@@ -6,6 +6,7 @@ library(jsonlite)
 library(usmap)
 library(scales)
 library(ggrepel)
+library(rsample)
 
 data(statepop)
 
@@ -173,7 +174,6 @@ covid_surveillance %>%
   recipes::prep() %>%
   recipes::juice() -> covid_surveillance
 
-library(rsample)
 set.seed(123)
 # Create a split object
 modeldf_split <- rsample::initial_split(covid_surveillance_data, prop = 0.70)
