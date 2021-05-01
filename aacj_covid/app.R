@@ -6,6 +6,7 @@ library(jsonlite)
 library(usmap)
 library(scales)
 library(ggrepel)
+library(rsample)
 
 data(statepop)
 
@@ -83,10 +84,6 @@ loadData <- function(dataSetID, keyColumn) {
 }
 
 
-
-
-
-
 fullData <- loadData('9bhg-hcku', 'data_as_of')
 fullData <- fullData %>%
   mutate(start_date = str_sub(start_date, 1, 10),
@@ -98,17 +95,17 @@ fullData <- fullData %>%
   mutate_at(vars(matches("deaths|covid")), as.numeric) %>%
   filter(state != "United States")
 
-fullData_EDA <- fullData %>% 
+fullData_EDA <- fullData %>%
   mutate(month = as.numeric(month),
-         year = as.numeric(year)) %>% 
+         year = as.numeric(year)) %>%
   filter(group == "By Month",
          !is.na(month),
          !is.na(year),
          sex != "All Sexes",
          age_group != "All Ages",
-         state != "United States") %>% 
+         state != "United States") %>%
   mutate(month = as_factor(month),
-         year = as_factor(year)) %>% 
+         year = as_factor(year)) %>%
   select(-c(group, start_date, end_date))
 
 fullData_color <- fullData %>% select(year, month, sex, age_group)
@@ -116,19 +113,19 @@ fullData_color <- fullData %>% select(year, month, sex, age_group)
 fullData_EDA$year <- recode_factor(fullData_EDA$year, `1`="2020", `2`="2021")
 fullData_EDA$month <- recode_factor(fullData_EDA$month, `1`="Jan", `2`="Feb", `3`="Mar", `4`="Apr", `5`="May", `6`="Jun", `7`="Jul", `8`="Aug", `9`="Sep", `10`="Oct", `11`="Nov", `12`="Dec")
 
-fullData_EDA_1 <- fullData_EDA %>% 
+fullData_EDA_1 <- fullData_EDA %>%
   select(-c(state,sex,age_group))
 
 fullData_EDA_1$year <- recode_factor(fullData_EDA$year, `1`="2020", `2`="2021")
 
-# fullData_EDA_2 <- fullData_EDA %>% 
-#   group_by(state, sex, age_group) %>% 
-#   summarise(total_deaths=sum(total_deaths), 
-#             covid_19_deaths = sum(covid_19_deaths), 
-#             pneumonia_deaths = sum(pneumonia_deaths), 
-#             pneumonia_and_covid_19_deaths = sum(pneumonia_and_covid_19_deaths), 
-#             influenza_deaths = sum(influenza_deaths), 
-#             pneumonia_influenza_or_covid = sum(pneumonia_influenza_or_covid), 
+# fullData_EDA_2 <- fullData_EDA %>%
+#   group_by(state, sex, age_group) %>%
+#   summarise(total_deaths=sum(total_deaths),
+#             covid_19_deaths = sum(covid_19_deaths),
+#             pneumonia_deaths = sum(pneumonia_deaths),
+#             pneumonia_and_covid_19_deaths = sum(pneumonia_and_covid_19_deaths),
+#             influenza_deaths = sum(influenza_deaths),
+#             pneumonia_influenza_or_covid = sum(pneumonia_influenza_or_covid),
 #             .groups = "keep")
 
 # ggplot(fullData_EDA_2, aes(x=sex, y=total_deaths)) +
@@ -151,7 +148,6 @@ STATE_OPTIONS <-
     recursive = TRUE)
 
 # Pre conditions data
-
 pre_conditions_data <- read_csv("../data/conditions.csv") %>%
   mutate_at(vars(data_as_of:end_date), lubridate::ymd) %>%
   mutate_at(vars(group:age_group), as_factor) %>%
@@ -178,15 +174,14 @@ covid_surveillance %>%
   recipes::prep() %>%
   recipes::juice() -> covid_surveillance
 
-library(rsample)
 set.seed(123)
 # Create a split object
 modeldf_split <- rsample::initial_split(covid_surveillance_data, prop = 0.70)
 # Build training data set
-model_training <- modeldf_split %>% 
+model_training <- modeldf_split %>%
   training()
 # Build testing data set
-model_test <- modeldf_split %>% 
+model_test <- modeldf_split %>%
   testing()
 
 # training models
@@ -195,7 +190,7 @@ train_hosp_model <- glm(hosp_yn ~.,family=binomial(link='logit'), data = model_t
 train_icu_model <- glm(icu_yn ~.,family=binomial(link='logit'), data = model_training %>% select(-hosp_yn, -death_yn))
 
 # Performance Metrics
-# Pseudo R-squared 
+# Pseudo R-squared
 death_model_pr2 = pscl::pR2(train_death_model)["McFadden"]
 hosp_model_pr2 = pscl::pR2(train_hosp_model)["McFadden"]
 icu_model_pr2 = pscl::pR2(train_icu_model)["McFadden"]
@@ -216,95 +211,87 @@ icu_conMat = table(model_test$icu_yn, test_icu_pred > 0.5) %>% prop.table() %>% 
 # death_pred <- predict(train_death_model, new.df, type = "response")
 # hosp_pred <- predict(train_hosp_model, new.df, type = "response")
 # icu_pred <- predict(train_icu_model, new.df, type = "response")
+
+
 ui <- fluidPage(
   titlePanel("ACCJ COVID-19 Shiny App"),
   tabsetPanel(
     tabPanel(
-      "Explore",  # Exploratory data analysis
+      "Explore",
       fluidRow(
-        column(5,
-               sidebarPanel(
-                 selectInput(inputId = "var1", label = "Variable (Univariate)", choices = names(fullData_EDA_1), selected = "covid_19_deaths"),
-                 checkboxInput(inputId = "log1", label = "Log_Transform?", value = FALSE, width = NULL),
-                 sliderInput(inputId = "bins1", label = "Bins", min = 1, max = 100, value = 50),
-               )
+        column(
+          5,
+          selectInput(inputId = "var1", label = "Variable (Univariate)", choices = names(fullData_EDA_1), selected = "covid_19_deaths"),
+          checkboxInput(inputId = "log1", label = "Log_Transform?", value = FALSE, width = NULL),
+          sliderInput(inputId = "bins1", label = "Bins", min = 1, max = 100, value = 50)
         ),
-        column(7,
-               mainPanel(
-                 plotOutput("plot1"),
-               )
+        column(
+          7,
+          plotOutput("plot1")
         )
       ),
       fluidRow(
-        column(5,
-               sidebarPanel(
-                 selectInput("var2",label = "X Variable (Bivariate)",
-                             choices = names(fullData_EDA),
-                             selected = "pneumonia_deaths"),
-                 checkboxInput("log2", "Log_Transform?", value = FALSE, width = NULL),
-                 selectInput("var3",label = "Y Variable (Bivariate)",
-                             choices = names(fullData_EDA),
-                             selected = "covid_19_deaths"),
-                 checkboxInput("log3", "Log_Transform?", value = FALSE, width = NULL),
-                 varSelectInput(inputId = "color1",label = "color", data = fullData_color,selected = "age_group"),
-                 checkboxInput("ols1", "Trendline", value = FALSE, width = NULL),
-               )
+        column(
+          5,
+          selectInput("var2",label = "X Variable (Bivariate)",
+                     choices = names(fullData_EDA),
+                     selected = "pneumonia_deaths"),
+          checkboxInput("log2", "Log_Transform?", value = FALSE, width = NULL),
+          selectInput("var3",label = "Y Variable (Bivariate)",
+                     choices = names(fullData_EDA),
+                     selected = "covid_19_deaths"),
+          checkboxInput("log3", "Log_Transform?", value = FALSE, width = NULL),
+          varSelectInput(inputId = "color1",label = "color", data = fullData_color,selected = "age_group"),
+          checkboxInput("ols1", "Trendline", value = FALSE, width = NULL)
         ),
-        column(7,
-               mainPanel(
-                 plotOutput("plot2"),
-               )
+        column(
+          7,
+          plotOutput("plot2")
         )
       )
     ),
     tabPanel(
-      "Compare",  # Bivariate data analysis and statistical modeling
+      "Compare",
       fluidRow(
-        column(5,
-               sidebarPanel(
-                 varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
-                 varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions"),
-               )
+        column(
+          5,
+          varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
+          varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions")
         ),
-        column(7,
-               mainPanel(
-                 plotOutput("plot"),
-               )
+        column(
+          7,
+          plotOutput("plot")
         )
       ),
       br(),
       br(),
       fluidRow(
-        column(5,
-               sidebarPanel(
-                 selectizeInput('option1', 'Gender', choices = levels(covid_surveillance_data$sex)),
-                 selectizeInput('option2', 'Age Group', choices = levels(covid_surveillance_data$age_group)),
-                 selectizeInput('option3', 'Race/Ethnicity', choices = levels(covid_surveillance_data$race_ethnicity_combined)),
-                 selectizeInput('option4', 'Status', choices = levels(covid_surveillance_data$current_status)),
-                 selectizeInput('option5', 'Medical Condition', choices = levels(covid_surveillance_data$medcond_yn)),
-                 radioButtons('option6', 'Risk Models', choices = c("Death", "Hospital", "ICU"), selected = "Death"),
-                 actionButton('option7', 'Risk', icon = icon("bullseye"), class = "btn-success"),
-                 p("Click here to run risk model"),
-                 br(),
-                 br(),
-                 p("McFadden's Log Likelihood"),
-                 textOutput("pseudo_r2"),
-                 br(),
-                 br(),
-                 p("Probable Risk with Exposure"),
-                 textOutput("Chances"),
-                 br(),
-                 br(),
-                 p("Confusion Matrix"),
-                 verbatimTextOutput("Conf_Mat")
-                 
-               )
+        column(
+          5,
+          selectizeInput('option1', 'Gender', choices = levels(covid_surveillance_data$sex)),
+          selectizeInput('option2', 'Age Group', choices = levels(covid_surveillance_data$age_group)),
+          selectizeInput('option3', 'Race/Ethnicity', choices = levels(covid_surveillance_data$race_ethnicity_combined)),
+          selectizeInput('option4', 'Status', choices = levels(covid_surveillance_data$current_status)),
+          selectizeInput('option5', 'Medical Condition', choices = levels(covid_surveillance_data$medcond_yn)),
+          radioButtons('option6', 'Risk Models', choices = c("Death", "Hospital", "ICU"), selected = "Death"),
+          actionButton('option7', 'Risk', icon = icon("bullseye"), class = "btn-success"),
+          p("Click here to run risk model"),
+          br(),
+          br(),
+          p("McFadden's Log Likelihood"),
+          textOutput("pseudo_r2"),
+          br(),
+          br(),
+          p("Probable Risk with Exposure"),
+          textOutput("Chances"),
+          br(),
+          br(),
+          p("Confusion Matrix"),
+          verbatimTextOutput("Conf_Mat")
         ),
-        column(7,
-               mainPanel(
-                 plotOutput("rocPlot"),
-                 
-               )
+        column(
+          7,
+          plotOutput("rocPlot")
         )
       )
     ),
@@ -349,11 +336,12 @@ ui <- fluidPage(
         tabPanel(
           "Surveillance",
           dataTableOutput("spreadsheet3")
-        ) 
+        )
       )
     )
   )
 )
+
 
 server <- function(input, output, session) {
   mapData <- reactive({
@@ -475,9 +463,9 @@ server <- function(input, output, session) {
   })
 
   output$plot1 <- renderPlot({
-    
+
     if (is.numeric(fullData_EDA_1[,input$var1])) {
-      
+
       if(!input$log1)
       {
         ggplot(fullData_EDA_1, aes(x = .data[[input$var1]])) +
@@ -492,7 +480,7 @@ server <- function(input, output, session) {
           scale_fill_gradient("Count", low="green", high="red")
       }
     }
-    
+
     else if (input$var1 == "state" || input$var1 == "age_group") {
       ggplot(fullData_EDA_1, aes(x = .data[[input$var1]])) +
         geom_bar(aes(fill=..count..), show.legend = FALSE) +
@@ -507,7 +495,7 @@ server <- function(input, output, session) {
   })
 
   output$plot2 <- renderPlot({
-    
+
     if (is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
       p2 <- ggplot(fullData_EDA, aes(x = .data[[input$var2]], y = .data[[input$var3]])) +
         geom_point(aes(color = !!input$color1))
@@ -530,7 +518,7 @@ server <- function(input, output, session) {
         p2<- p2 + scale_x_log10() + scale_y_log10()
         p2
       }
-      
+
       if(input$ols1)
       {
         p2 <- p2 +geom_smooth(method='loess', formula = y~x, se=FALSE)
@@ -540,10 +528,10 @@ server <- function(input, output, session) {
       {
         p2
       }
-      
+
     }
     else if (input$var2 == "state" || input$var2 == "age_group") {
-      p3 <- ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) + 
+      p3 <- ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
         geom_boxplot(aes(color = .data[[input$var2]]), show.legend = FALSE)
       if (!is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
         if (!input$log2 && !input$log3) {
@@ -570,7 +558,7 @@ server <- function(input, output, session) {
       }
     }
     else if (input$var2 != "state" || input$var2 != "age_group"){
-      p3 <- ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) + 
+      p3 <- ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
         geom_boxplot(aes(color = .data[[input$var2]]), show.legend = FALSE)
       if (!is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
         if (!input$log2 && input$log3) {
@@ -597,7 +585,7 @@ server <- function(input, output, session) {
           geom_jitter()
       }
       else if (is.numeric(fullData_EDA[,input$var2])&&!is.numeric(fullData_EDA[,input$var3])) {
-        p3 <- ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) + 
+        p3 <- ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
           geom_boxplot(aes(color = .data[[input$var2]]), show.legend = FALSE)
         if (input$log2 && !input$log3){
           p3 + scale_x_log10() + ggstance::geom_boxploth()
@@ -662,17 +650,17 @@ server <- function(input, output, session) {
         theme_gray()
     }
   })
-  
+
   # Build new df
-  
+
   tib <- reactive({
     new.df <- tibble(!!input$option1, !!input$option2, !!input$option3, !!input$option4, !!input$option5)
     new.df
   })
-  
+
   # Activate action button
   risk <- eventReactive(input$option7, {
-    
+
     if (input$option6 == "Death") {
       death_pred <- predict(train_death_model, new.df, type = "response")
       death_pred
@@ -684,14 +672,14 @@ server <- function(input, output, session) {
       icu_pred
     }
   })
-  
-  
+
+
   # Select model
   output$Chances <- renderText({
-    
+
     risk()
   })
-  
+
   #   # Generate Performance Metrics - Pseudo-r2 - McFadden
   output$pseudo_r2 <- renderText({
     if (input$option6 == "Death") {
@@ -701,9 +689,9 @@ server <- function(input, output, session) {
     } else if (input$option6 == "ICU") {
       icu_model_pr2
     }
-    
+
   })
-  #   
+  #
   #   # Generate Confusion Matrix
   output$Conf_Mat <- renderPrint({
     if (input$option6 == "Death") {
@@ -713,9 +701,9 @@ server <- function(input, output, session) {
     } else if (input$option6 == "ICU") {
       icu_conMat
     }
-    
+
   })
-  
+
   #   # Generate AUC plot
   output$rocPlot <- renderPlot({
     if (input$option6 == "Death") {
@@ -731,7 +719,7 @@ server <- function(input, output, session) {
         ROCR::performance(measure = "tpr", x.measure = "fpr") %>%
         plot()
     }
-    
+
   })
 
   output$spreadsheet1 <- renderDataTable({
@@ -744,5 +732,6 @@ server <- function(input, output, session) {
     covid_surveillance_data
   })
 }
+
 
 shinyApp(ui, server)
