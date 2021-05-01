@@ -349,7 +349,7 @@ ui <- fluidPage(
         tabPanel(
           "Surveillance",
           dataTableOutput("spreadsheet3")
-        )
+        ) 
       )
     )
   )
@@ -661,6 +661,77 @@ server <- function(input, output, session) {
         # scale_fill_brewer(palette = "Blues") +
         theme_gray()
     }
+  })
+  
+  # Build new df
+  
+  tib <- reactive({
+    new.df <- tibble(!!input$option1, !!input$option2, !!input$option3, !!input$option4, !!input$option5)
+    new.df
+  })
+  
+  # Activate action button
+  risk <- eventReactive(input$option7, {
+    
+    if (input$option6 == "Death") {
+      death_pred <- predict(train_death_model, new.df, type = "response")
+      death_pred
+    } else if (input$option6 == "Hospital") {
+      hosp_pred <- predict(train_hosp_model, new.df, type = "response")
+      hosp_pred
+    } else if (input$option6 == "ICU") {
+      icu_pred <- predict(train_icu_model, new.df, type = "response")
+      icu_pred
+    }
+  })
+  
+  
+  # Select model
+  output$Chances <- renderText({
+    
+    risk()
+  })
+  
+  #   # Generate Performance Metrics - Pseudo-r2 - McFadden
+  output$pseudo_r2 <- renderText({
+    if (input$option6 == "Death") {
+      death_model_pr2
+    } else if (input$option6 == "Hospital") {
+      hosp_model_pr2
+    } else if (input$option6 == "ICU") {
+      icu_model_pr2
+    }
+    
+  })
+  #   
+  #   # Generate Confusion Matrix
+  output$Conf_Mat <- renderPrint({
+    if (input$option6 == "Death") {
+      death_conMat
+    } else if (input$option6 == "Hospital") {
+      hosp_conMat
+    } else if (input$option6 == "ICU") {
+      icu_conMat
+    }
+    
+  })
+  
+  #   # Generate AUC plot
+  output$rocPlot <- renderPlot({
+    if (input$option6 == "Death") {
+      ROCR::prediction(test_death_pred, model_test$death_yn) %>%
+        ROCR::performance(measure = "tpr", x.measure = "fpr") %>%
+        plot()
+    } else if (input$option6 == "Hospital") {
+      ROCR::prediction(test_hosp_pred, model_test$hosp_yn) %>%
+        ROCR::performance(measure = "tpr", x.measure = "fpr") %>%
+        plot()
+    } else if (input$option6 == "ICU") {
+      ROCR::prediction(test_icu_pred, model_test$icu_yn) %>%
+        ROCR::performance(measure = "tpr", x.measure = "fpr") %>%
+        plot()
+    }
+    
   })
 
   output$spreadsheet1 <- renderDataTable({
