@@ -217,91 +217,81 @@ ui <- fluidPage(
   titlePanel("ACCJ COVID-19 Shiny App"),
   tabsetPanel(
     tabPanel(
-      "Explore",  # Exploratory data analysis
+      "Explore",
       fluidRow(
-        column(5,
-               sidebarPanel(
-                 selectInput(inputId = "var1", label = "Variable (Univariate)", choices = names(fullData_EDA_1), selected = "covid_19_deaths"),
-                 checkboxInput(inputId = "log1", label = "Log_Transform?", value = FALSE, width = NULL),
-                 sliderInput(inputId = "bins1", label = "Bins", min = 1, max = 100, value = 50),
-               )
+        column(
+          5,
+          selectInput(inputId = "var1", label = "Variable (Univariate)", choices = names(fullData_EDA_1), selected = "covid_19_deaths"),
+          checkboxInput(inputId = "log1", label = "Log_Transform?", value = FALSE, width = NULL),
+          sliderInput(inputId = "bins1", label = "Bins", min = 1, max = 100, value = 50)
         ),
-        column(7,
-               mainPanel(
-                 plotOutput("plot1"),
-               )
+        column(
+          7,
+          plotOutput("plot1")
         )
       ),
       fluidRow(
-        column(5,
-               sidebarPanel(
-                 selectInput("var2",label = "X Variable (Bivariate)",
-                             choices = names(fullData_EDA),
-                             selected = "pneumonia_deaths"),
-                 checkboxInput("log2", "Log_Transform?", value = FALSE, width = NULL),
-                 selectInput("var3",label = "Y Variable (Bivariate)",
-                             choices = names(fullData_EDA),
-                             selected = "covid_19_deaths"),
-                 checkboxInput("log3", "Log_Transform?", value = FALSE, width = NULL),
-                 varSelectInput(inputId = "color1",label = "color", data = fullData_color,selected = "age_group"),
-                 checkboxInput("ols1", "Trendline", value = FALSE, width = NULL),
-               )
+        column(
+          5,
+          selectInput("var2",label = "X Variable (Bivariate)",
+                     choices = names(fullData_EDA),
+                     selected = "pneumonia_deaths"),
+          checkboxInput("log2", "Log_Transform?", value = FALSE, width = NULL),
+          selectInput("var3",label = "Y Variable (Bivariate)",
+                     choices = names(fullData_EDA),
+                     selected = "covid_19_deaths"),
+          checkboxInput("log3", "Log_Transform?", value = FALSE, width = NULL),
+          varSelectInput(inputId = "color1",label = "color", data = fullData_color,selected = "age_group"),
+          checkboxInput("ols1", "Trendline", value = FALSE, width = NULL)
         ),
-        column(7,
-               mainPanel(
-                 plotOutput("plot2"),
-               )
+        column(
+          7,
+          plotOutput("plot2")
         )
       )
     ),
     tabPanel(
-      "Compare",  # Bivariate data analysis and statistical modeling
+      "Compare",
       fluidRow(
-        column(5,
-               sidebarPanel(
-                 varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
-                 varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions"),
-               )
+        column(
+          5,
+          varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
+          varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions")
         ),
-        column(7,
-               mainPanel(
-                 plotOutput("plot"),
-               )
+        column(
+          7,
+          plotOutput("plot")
         )
       ),
       br(),
       br(),
       fluidRow(
-        column(5,
-               sidebarPanel(
-                 selectizeInput('option1', 'Gender', choices = levels(covid_surveillance_data$sex)),
-                 selectizeInput('option2', 'Age Group', choices = levels(covid_surveillance_data$age_group)),
-                 selectizeInput('option3', 'Race/Ethnicity', choices = levels(covid_surveillance_data$race_ethnicity_combined)),
-                 selectizeInput('option4', 'Status', choices = levels(covid_surveillance_data$current_status)),
-                 selectizeInput('option5', 'Medical Condition', choices = levels(covid_surveillance_data$medcond_yn)),
-                 radioButtons('option6', 'Risk Models', choices = c("Death", "Hospital", "ICU"), selected = "Death"),
-                 actionButton('option7', 'Risk', icon = icon("bullseye"), class = "btn-success"),
-                 p("Click here to run risk model"),
-                 br(),
-                 br(),
-                 p("McFadden's Log Likelihood"),
-                 textOutput("pseudo_r2"),
-                 br(),
-                 br(),
-                 p("Probable Risk with Exposure"),
-                 textOutput("Chances"),
-                 br(),
-                 br(),
-                 p("Confusion Matrix"),
-                 verbatimTextOutput("Conf_Mat")
-
-               )
+        column(
+          5,
+          selectizeInput('option1', 'Gender', choices = levels(covid_surveillance_data$sex)),
+          selectizeInput('option2', 'Age Group', choices = levels(covid_surveillance_data$age_group)),
+          selectizeInput('option3', 'Race/Ethnicity', choices = levels(covid_surveillance_data$race_ethnicity_combined)),
+          selectizeInput('option4', 'Status', choices = levels(covid_surveillance_data$current_status)),
+          selectizeInput('option5', 'Medical Condition', choices = levels(covid_surveillance_data$medcond_yn)),
+          radioButtons('option6', 'Risk Models', choices = c("Death", "Hospital", "ICU"), selected = "Death"),
+          actionButton('option7', 'Risk', icon = icon("bullseye"), class = "btn-success"),
+          p("Click here to run risk model"),
+          br(),
+          br(),
+          p("McFadden's Log Likelihood"),
+          textOutput("pseudo_r2"),
+          br(),
+          br(),
+          p("Probable Risk with Exposure"),
+          textOutput("Chances"),
+          br(),
+          br(),
+          p("Confusion Matrix"),
+          verbatimTextOutput("Conf_Mat")
         ),
-        column(7,
-               mainPanel(
-                 plotOutput("rocPlot"),
-
-               )
+        column(
+          7,
+          plotOutput("rocPlot")
         )
       )
     ),
