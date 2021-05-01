@@ -1,10 +1,3 @@
-#
-# Dataset documentation:
-#   https://data.cdc.gov/NCHS/Provisional-COVID-19-Death-Counts-by-Sex-Age-and-S/9bhg-hcku
-#   https://data.cdc.gov/Case-Surveillance/COVID-19-Case-Surveillance-Public-Use-Data/vbim-akqf
-#
-
-
 library(shiny)
 library(httr)
 library(keyring)
@@ -12,6 +5,7 @@ library(tidyverse)
 library(jsonlite)
 library(usmap)
 library(scales)
+library(ggrepel)
 
 data(statepop)
 
@@ -95,8 +89,7 @@ loadData <- function(dataSetID, keyColumn) {
 
 fullData <- loadData('9bhg-hcku', 'data_as_of')
 fullData <- fullData %>%
-  mutate(data_as_of = str_sub(data_as_of, 1, 10),
-         start_date = str_sub(start_date, 1, 10),
+  mutate(start_date = str_sub(start_date, 1, 10),
          end_date = str_sub(end_date, 1, 10),
          footnote = NULL,
          data_as_of = NULL) %>%
@@ -105,14 +98,50 @@ fullData <- fullData %>%
   mutate_at(vars(matches("deaths|covid")), as.numeric) %>%
   filter(state != "United States")
 
+fullData_EDA <- fullData %>% 
+  mutate(month = as.numeric(month),
+         year = as.numeric(year)) %>% 
+  filter(group == "By Month",
+         !is.na(month),
+         !is.na(year),
+         sex != "All Sexes",
+         age_group != "All Ages",
+         state != "United States") %>% 
+  mutate(month = as_factor(month),
+         year = as_factor(year)) %>% 
+  select(-c(group, start_date, end_date))
+
+fullData_color <- fullData %>% select(year, month, sex, age_group)
+
+fullData_EDA$year <- recode_factor(fullData_EDA$year, `1`="2020", `2`="2021")
+fullData_EDA$month <- recode_factor(fullData_EDA$month, `1`="Jan", `2`="Feb", `3`="Mar", `4`="Apr", `5`="May", `6`="Jun", `7`="Jul", `8`="Aug", `9`="Sep", `10`="Oct", `11`="Nov", `12`="Dec")
+
+fullData_EDA_1 <- fullData_EDA %>% 
+  select(-c(state,sex,age_group))
+
+fullData_EDA_1$year <- recode_factor(fullData_EDA$year, `1`="2020", `2`="2021")
+
+# fullData_EDA_2 <- fullData_EDA %>% 
+#   group_by(state, sex, age_group) %>% 
+#   summarise(total_deaths=sum(total_deaths), 
+#             covid_19_deaths = sum(covid_19_deaths), 
+#             pneumonia_deaths = sum(pneumonia_deaths), 
+#             pneumonia_and_covid_19_deaths = sum(pneumonia_and_covid_19_deaths), 
+#             influenza_deaths = sum(influenza_deaths), 
+#             pneumonia_influenza_or_covid = sum(pneumonia_influenza_or_covid), 
+#             .groups = "keep")
+
+# ggplot(fullData_EDA_2, aes(x=sex, y=total_deaths)) +
+#     geom_col(aes(fill = sex)) + coord_flip()
+
 AGE_OPTIONS <- unique(fullData$age_group)
 DEATH_COLUMN_OPTIONS <- c(
   'COVID-19 Deaths' = 'covid_19_deaths',
-  'Total Deaths' = 'total_deaths',
+  'Influenza Deaths' = 'influenza_deaths',
   'Pneumonia Deaths' = 'pneumonia_deaths',
   'Pneumonia & COVID-19 Deaths' = 'pneumonia_and_covid_19_deaths',
-  'Influenza Deaths' = 'influenza_deaths',
-  'Pneumonia, Influenza, or COVID-19 Deaths' = 'pneumonia_influenza_or_covid'
+  'Pneumonia, Influenza, or COVID-19 Deaths' = 'pneumonia_influenza_or_covid',
+  'Total Deaths' = 'total_deaths'
 )
 GROUP_OPTIONS <- unique(fullData$group)
 SEX_OPTIONS <- unique(fullData$sex)
@@ -196,7 +225,7 @@ ui <- fluidPage(
       fluidRow(
         column(5,
                sidebarPanel(
-                 selectInput(inputId = "var1", label = "Variable (Univariate)", choices = names(fullData), selected = "covid_19_deaths"),
+                 selectInput(inputId = "var1", label = "Variable (Univariate)", choices = names(fullData_EDA_1), selected = "covid_19_deaths"),
                  checkboxInput(inputId = "log1", label = "Log_Transform?", value = FALSE, width = NULL),
                  sliderInput(inputId = "bins1", label = "Bins", min = 1, max = 100, value = 50),
                )
@@ -211,13 +240,14 @@ ui <- fluidPage(
         column(5,
                sidebarPanel(
                  selectInput("var2",label = "X Variable (Bivariate)",
-                             choices = names(fullData),
-                             selected = "age_group"),
+                             choices = names(fullData_EDA),
+                             selected = "pneumonia_deaths"),
                  checkboxInput("log2", "Log_Transform?", value = FALSE, width = NULL),
                  selectInput("var3",label = "Y Variable (Bivariate)",
-                             choices = names(fullData),
+                             choices = names(fullData_EDA),
                              selected = "covid_19_deaths"),
                  checkboxInput("log3", "Log_Transform?", value = FALSE, width = NULL),
+                 varSelectInput(inputId = "color1",label = "color", data = fullData_color,selected = "age_group"),
                  checkboxInput("ols1", "Trendline", value = FALSE, width = NULL),
                )
         ),
@@ -280,17 +310,19 @@ ui <- fluidPage(
       )
     ),
     tabPanel(
-      "Locate",  # Maps
+      'Explore by State',
       fluidRow(
         column(
           4,
           selectInput('deaths', 'Cause(s) of Death', DEATH_COLUMN_OPTIONS,
                       selected = 'COVID-19 Deaths'),
-          selectInput('group', 'Group', GROUP_OPTIONS, selected = 'By Total'),
-          selectInput('state', 'State', STATE_OPTIONS, selected = 'All States'),
           selectInput('sex', 'Sex', SEX_OPTIONS, selected = 'All Sexes'),
           selectInput('age_group', 'Age Group', AGE_OPTIONS,
-                      selected = 'All Ages')
+                      selected = 'All Ages'),
+          selectInput('state', 'State', STATE_OPTIONS,
+                      selected = 'All States'),
+          selectInput('group', 'Grouping', GROUP_OPTIONS,
+                      selected = 'By Total')
         ),
         column(
           8,
@@ -305,8 +337,21 @@ ui <- fluidPage(
       )
     ),
     tabPanel(
-      "Spreadsheet",  # Datasets
-      dataTableOutput('spreadsheet')
+      "Raw Data",
+      tabsetPanel(
+        tabPanel(
+          "Death Counts",
+          dataTableOutput("spreadsheet1")
+        ),
+        tabPanel(
+          "Preconditions",
+          dataTableOutput("spreadsheet2")
+        ),
+        tabPanel(
+          "Surveillance",
+          dataTableOutput("spreadsheet3")
+        ) 
+      )
     )
   )
 )
@@ -318,8 +363,7 @@ server <- function(input, output, session) {
              group == input$group &
              sex == input$sex &
              age_group == input$age_group) %>%
-      mutate(deaths = .data[[input$deaths]]) %>%
-      filter(!is.na(deaths)) ->
+      mutate(deaths = .data[[input$deaths]]) ->
       result
 
     if (input$state != 'All States') {
@@ -375,8 +419,8 @@ server <- function(input, output, session) {
              x = 'Year',
              y = 'Number of Deaths') +
         scale_y_continuous(labels = label_comma()) +
-        scale_fill_viridis_d() ->
-        plotData
+        scale_fill_viridis_d(option = 'B') ->
+        plot
     } else if (input$group == 'By Month') {
       plotData %>%
         mutate(monthYear = str_c(year, '-',
@@ -387,15 +431,14 @@ server <- function(input, output, session) {
              x = 'Month',
              y = 'Number of Deaths') +
         scale_y_continuous(labels = label_comma()) +
-        scale_fill_viridis_d() ->
-        plotData
+        scale_fill_viridis_d(option = 'B') ->
+        plot
     } else {
       if (input$state != 'All States') {
-        # TODO: refactor this block so that this text-only output also occurs
-        #       when state & sex & age are selected
         plotData %>%
-          # FIXME: there's an issue here when there are no rows for a combination of state + sex + age
-          mutate(deathsText = case_when(is.na(deaths) ~ 'NA',
+          mutate(deaths = case_when(is.na(deaths) ~ -1,
+                                    TRUE ~ deaths),
+                 deathsText = case_when(deaths == -1 ~ 'NA',
                                         TRUE ~ label_comma()(deaths))) %>%
           ggplot(aes(deaths, group)) +
           geom_text(aes(label = deathsText), show.legend = FALSE,
@@ -406,60 +449,69 @@ server <- function(input, output, session) {
           scale_x_continuous(breaks = NULL, labels = NULL) +
           scale_y_discrete(breaks = NULL, labels = NULL) +
           scale_fill_viridis_c() ->
-          plotData
+          plot
       } else {
         plotData %>%
-          mutate(state = fct_reorder(state, deaths)) %>%
+          mutate(plotData, state = fct_reorder(state, deaths)) %>%
           ggplot(aes(deaths, group, label = state)) +
           geom_col(aes(fill = deaths), show.legend = FALSE) +
+          geom_label_repel(data = filter(plotData, deaths > 0),
+                           position = position_stack(vjust = 0.5),
+                           segment.color = 'white',
+                           max.overlaps = 51,
+                           direction = 'y') +
           labs(title = str_c('Combined ', deathsTitle),
                x = 'Number of Deaths',
                y = NULL) +
           scale_x_continuous(labels = label_comma()) +
           scale_y_discrete(breaks = NULL, labels = NULL) +
           scale_fill_viridis_c() ->
-          plotData
+          plot
       }
     }
 
-    plotData +
+    plot +
       theme_bw() %>%
       return()
   })
 
   output$plot1 <- renderPlot({
-
-    if (is.numeric(fullData[,input$var1])) {
-
+    
+    if (is.numeric(fullData_EDA_1[,input$var1])) {
+      
       if(!input$log1)
       {
-        ggplot(fullData, aes(x = .data[[input$var1]])) +
-          geom_histogram(bins = input$bins1)
+        ggplot(fullData_EDA_1, aes(x = .data[[input$var1]])) +
+          geom_histogram(bins = input$bins1,aes(fill=..count..), show.legend = FALSE) +
+          scale_fill_gradient("Count", low="green", high="red")
       }
       else
       {
-        ggplot(fullData, aes(x = .data[[input$var1]]))+
-          geom_histogram(bins = input$bins1) +
-          scale_x_log10()
+        ggplot(fullData_EDA_1, aes(x = .data[[input$var1]]))+
+          geom_histogram(bins = input$bins1,aes(fill=..count..), show.legend = FALSE) +
+          scale_x_log10() +
+          scale_fill_gradient("Count", low="green", high="red")
       }
     }
-
+    
     else if (input$var1 == "state" || input$var1 == "age_group") {
-      ggplot(fullData, aes(x = .data[[input$var1]])) +
-        geom_bar() +
-        coord_flip()
+      ggplot(fullData_EDA_1, aes(x = .data[[input$var1]])) +
+        geom_bar(aes(fill=..count..), show.legend = FALSE) +
+        coord_flip() +
+        scale_fill_gradient("Count", low="darkgreen", high="darkred")
     }
     else {
-      ggplot(fullData, aes(x = .data[[input$var1]])) +
-        geom_bar() 
+      ggplot(fullData_EDA_1, aes(x = .data[[input$var1]])) +
+        geom_bar(aes(fill=..count..), show.legend = FALSE) +
+        scale_fill_gradient("Count", low="darkgreen", high="darkred")
     }
   })
-  
-  output$plot2 <- renderPlot({
 
-    if (is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])) {
-      p2 <- ggplot(fullData, aes(x = .data[[input$var2]], y = .data[[input$var3]])) +
-        geom_point()
+  output$plot2 <- renderPlot({
+    
+    if (is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
+      p2 <- ggplot(fullData_EDA, aes(x = .data[[input$var2]], y = .data[[input$var3]])) +
+        geom_point(aes(color = !!input$color1))
       if(!input$log2 && !input$log3)
       {
         p2
@@ -479,7 +531,7 @@ server <- function(input, output, session) {
         p2<- p2 + scale_x_log10() + scale_y_log10()
         p2
       }
-
+      
       if(input$ols1)
       {
         p2 <- p2 +geom_smooth(method='loess', formula = y~x, se=FALSE)
@@ -489,35 +541,29 @@ server <- function(input, output, session) {
       {
         p2
       }
-
+      
     }
     else if (input$var2 == "state" || input$var2 == "age_group") {
-      if (!is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])) {
+      p3 <- ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) + 
+        geom_boxplot(aes(color = .data[[input$var2]]), show.legend = FALSE)
+      if (!is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
         if (!input$log2 && !input$log3) {
-          # Create p3 <- ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]]))
-          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-            geom_boxplot() + coord_flip()
+          p3 + coord_flip()
         }
         else if (!input$log2 && input$log3) {
-          # Create p3 <- ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]]))
-          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-            geom_boxplot() + scale_y_log10() + coord_flip()
+          p3 + scale_y_log10() + coord_flip()
         }
         else if (input$log2 && !input$log3) {
           # validate(): cannot log a non-numeric variable, please select a numeric variable.
-          # Create p3 <- ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]]))
-          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-            geom_boxplot() + coord_flip()
+          p3 + coord_flip()
         }
         else if (input$log2 && input$log3) {
           # validate(): cannot log a non-numeric variable, please select a numeric variable.
-          # Create p3 <- ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]]))
-          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-            geom_boxplot() + scale_y_log10() + coord_flip()
+          p3 + scale_y_log10() + coord_flip()
         }
       }
-      else if (!is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])) {
-        ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+      else if (!is.numeric(fullData_EDA[,input$var2])&&!is.numeric(fullData_EDA[,input$var3])) {
+        ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
           geom_jitter() + coord_flip()
         # Issue: when age_group and state are on the x-axis, illegible.
         # Consider validate() to warn against plotting age_group vs state.
@@ -525,67 +571,62 @@ server <- function(input, output, session) {
       }
     }
     else if (input$var2 != "state" || input$var2 != "age_group"){
-      if (!is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])) {
+      p3 <- ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) + 
+        geom_boxplot(aes(color = .data[[input$var2]]), show.legend = FALSE)
+      if (!is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
         if (!input$log2 && input$log3) {
-          # Create p3 <- ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]]))
-          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-            geom_boxplot() + scale_y_log10()
+          p3 + scale_y_log10()
         }
         else if (input$log2 && !input$log3){
           # validate(): cannot log a non-numeric variable, please select a numeric variable.
-          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-            geom_boxplot()
+          p3
         }
         else if (input$log2 && input$log3){
           # validate(): cannot log a non-numeric variable, please select a numeric variable.
-          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-            geom_boxplot() + scale_y_log10()
+          p3 + scale_y_log10()
         }
         else if (!input$log2 && !input$log3){
-          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-            geom_boxplot()
+          p3
         }
       }
-      else if (!is.numeric(fullData[,input$var2])&&is.numeric(fullData[,input$var3])) {
-        ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+      else if (!is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
+        ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
           geom_boxplot()
       }
-      else if (!is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])) {
-        ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+      else if (!is.numeric(fullData_EDA[,input$var2])&&!is.numeric(fullData_EDA[,input$var3])) {
+        ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
           geom_jitter()
       }
-      else if (is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])) {
+      else if (is.numeric(fullData_EDA[,input$var2])&&!is.numeric(fullData_EDA[,input$var3])) {
+        p3 <- ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) + 
+          geom_boxplot(aes(color = .data[[input$var2]]), show.legend = FALSE)
         if (input$log2 && !input$log3){
-          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-            geom_boxplot() + scale_x_log10() + ggstance::geom_boxploth()
+          p3 + scale_x_log10() + ggstance::geom_boxploth()
         }
         else if (!input$log2 && input$log3){
           # validate(): cannot log a non-numeric variable, please select a numeric variable.
-          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-            geom_boxplot() + ggstance::geom_boxploth()
+          p3 + ggstance::geom_boxploth()
         }
         else if (input$log2 && input$log3){
           # validate(): cannot log a non-numeric variable, please select a numeric variable.
-          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-            geom_boxplot() + scale_x_log10() + ggstance::geom_boxploth()
+          p3 + scale_x_log10() + ggstance::geom_boxploth()
         }
         else if (!input$log2 && !input$log3){
-          ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-            geom_boxplot() + ggstance::geom_boxploth()
+          p3 + ggstance::geom_boxploth()
         }
       }
-      else if (is.numeric(fullData[,input$var2])&&!is.numeric(fullData[,input$var3])) {
-        ggplot(fullData, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
+      else if (is.numeric(fullData_EDA[,input$var2])&&!is.numeric(fullData_EDA[,input$var3])) {
+        ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
           geom_boxplot() + ggstance::geom_boxploth()
       }
     }
   })
-  
+
   # varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
   # varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions")
   output$plot <- renderPlot({
     # generate plots based on variables selected above
-    
+
     if (!!input$option2 == "age_group") {
       pre_conditions_data %>%
         ggplot(aes(x = !!input$option1, y = !!input$option2, fill = age_group)) +
@@ -595,7 +636,7 @@ server <- function(input, output, session) {
         theme_gray()
     } else if (!!input$option2 == "state") {
       pre_conditions_data %>%
-      group_by(state) %>%
+        group_by(state) %>%
         summarise(covid19_deaths = sum(covid_19_deaths)) %>%
         mutate(state = fct_reorder(state, covid19_deaths)) %>%
         ggplot(aes(covid19_deaths, state, fill = state)) +
@@ -604,7 +645,7 @@ server <- function(input, output, session) {
         theme_gray()
     } else if (!!input$option2 == "condition") {
       pre_conditions_data %>%
-      group_by(condition) %>%
+        group_by(condition) %>%
         summarise(covid19_deaths = sum(covid_19_deaths)) %>%
         mutate(condition = fct_reorder(condition, covid19_deaths)) %>%
         ggplot(aes(covid19_deaths, condition, fill = condition)) +
@@ -613,7 +654,7 @@ server <- function(input, output, session) {
         theme_gray()
     } else if (!!input$option2 == "condition_group") {
       pre_conditions_data %>%
-      group_by(condition_group) %>%
+        group_by(condition_group) %>%
         summarise(covid19_deaths = sum(covid_19_deaths)) %>%
         mutate(condition_group = fct_reorder(condition_group, covid19_deaths)) %>%
         ggplot(aes(covid19_deaths, condition_group, fill = condition_group)) +
@@ -621,12 +662,87 @@ server <- function(input, output, session) {
         # scale_fill_brewer(palette = "Blues") +
         theme_gray()
     }
-   
+  })
+  
+  # Build new df
+  
+  tib <- reactive({
+    new.df <- tibble(!!input$option1, !!input$option2, !!input$option3, !!input$option4, !!input$option5)
+    new.df
+  })
+  
+  # Activate action button
+  risk <- eventReactive(input$option7, {
+    
+    if (input$option6 == "Death") {
+      death_pred <- predict(train_death_model, new.df, type = "response")
+      death_pred
+    } else if (input$option6 == "Hospital") {
+      hosp_pred <- predict(train_hosp_model, new.df, type = "response")
+      hosp_pred
+    } else if (input$option6 == "ICU") {
+      icu_pred <- predict(train_icu_model, new.df, type = "response")
+      icu_pred
+    }
+  })
+  
+  
+  # Select model
+  output$Chances <- renderText({
+    
+    risk()
+  })
+  
+  #   # Generate Performance Metrics - Pseudo-r2 - McFadden
+  output$pseudo_r2 <- renderText({
+    if (input$option6 == "Death") {
+      death_model_pr2
+    } else if (input$option6 == "Hospital") {
+      hosp_model_pr2
+    } else if (input$option6 == "ICU") {
+      icu_model_pr2
+    }
+    
+  })
+  #   
+  #   # Generate Confusion Matrix
+  output$Conf_Mat <- renderPrint({
+    if (input$option6 == "Death") {
+      death_conMat
+    } else if (input$option6 == "Hospital") {
+      hosp_conMat
+    } else if (input$option6 == "ICU") {
+      icu_conMat
+    }
+    
+  })
+  
+  #   # Generate AUC plot
+  output$rocPlot <- renderPlot({
+    if (input$option6 == "Death") {
+      ROCR::prediction(test_death_pred, model_test$death_yn) %>%
+        ROCR::performance(measure = "tpr", x.measure = "fpr") %>%
+        plot()
+    } else if (input$option6 == "Hospital") {
+      ROCR::prediction(test_hosp_pred, model_test$hosp_yn) %>%
+        ROCR::performance(measure = "tpr", x.measure = "fpr") %>%
+        plot()
+    } else if (input$option6 == "ICU") {
+      ROCR::prediction(test_icu_pred, model_test$icu_yn) %>%
+        ROCR::performance(measure = "tpr", x.measure = "fpr") %>%
+        plot()
+    }
     
   })
 
-  output$spreadsheet <- renderDataTable({
+  output$spreadsheet1 <- renderDataTable({
     fullData
+  })
+  output$spreadsheet2 <- renderDataTable({
+    pre_conditions_data
+  })
+  output$spreadsheet3 <- renderDataTable({
+    covid_surveillance_data
   })
 }
 
