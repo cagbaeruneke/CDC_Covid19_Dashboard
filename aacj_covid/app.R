@@ -619,35 +619,33 @@ server <- function(input, output, session) {
         ggplot(aes(x = !!input$option1, y = !!input$option2, fill = age_group)) +
         geom_bar(stat = "identity", show.legend = FALSE) +
         scale_x_log10() +
-        scale_fill_brewer(palette = "Blues") +
+        scale_fill_brewer(palette = "Blues") + 
         theme_gray()
+        
     } else if (!!input$option2 == "state") {
       pre_conditions_data %>%
         group_by(state) %>%
         summarise(covid19_deaths = sum(covid_19_deaths)) %>%
         mutate(state = fct_reorder(state, covid19_deaths)) %>%
-        ggplot(aes(covid19_deaths, state, fill = state)) +
-        geom_bar(stat = "identity", show.legend = FALSE) +
-        # scale_fill_brewer(palette = "Blues") +
-        theme_gray()
+        ggplot(aes(covid19_deaths, state, fill = covid19_deaths)) +
+        geom_bar(stat = "identity", show.legend = FALSE) 
+       
     } else if (!!input$option2 == "condition") {
       pre_conditions_data %>%
         group_by(condition) %>%
         summarise(covid19_deaths = sum(covid_19_deaths)) %>%
         mutate(condition = fct_reorder(condition, covid19_deaths)) %>%
-        ggplot(aes(covid19_deaths, condition, fill = condition)) +
-        geom_bar(stat = "identity", show.legend = FALSE) +
-        # scale_fill_brewer(palette = "Blues") +
-        theme_gray()
+        ggplot(aes(covid19_deaths, condition, fill = covid19_deaths)) +
+        geom_bar(stat = "identity", show.legend = FALSE) 
+        
     } else if (!!input$option2 == "condition_group") {
       pre_conditions_data %>%
         group_by(condition_group) %>%
         summarise(covid19_deaths = sum(covid_19_deaths)) %>%
         mutate(condition_group = fct_reorder(condition_group, covid19_deaths)) %>%
-        ggplot(aes(covid19_deaths, condition_group, fill = condition_group)) +
-        geom_bar(stat = "identity", show.legend = FALSE) +
-        # scale_fill_brewer(palette = "Blues") +
-        theme_gray()
+        ggplot(aes(covid19_deaths, condition_group, fill = covid19_deaths)) +
+        geom_bar(stat = "identity", show.legend = FALSE) 
+        
     }
   })
 
@@ -680,7 +678,7 @@ server <- function(input, output, session) {
     risk()
   })
 
-  #   # Generate Performance Metrics - Pseudo-r2 - McFadden
+  ## Generate Performance Metrics - Pseudo-r2 - McFadden
   output$pseudo_r2 <- renderText({
     if (input$option6 == "Death") {
       death_model_pr2
