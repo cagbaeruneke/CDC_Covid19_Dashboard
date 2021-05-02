@@ -113,23 +113,6 @@ fullData_color <- fullData %>% select(year, month, sex, age_group)
 fullData_EDA$year <- recode_factor(fullData_EDA$year, `1`="2020", `2`="2021")
 fullData_EDA$month <- recode_factor(fullData_EDA$month, `1`="Jan", `2`="Feb", `3`="Mar", `4`="Apr", `5`="May", `6`="Jun", `7`="Jul", `8`="Aug", `9`="Sep", `10`="Oct", `11`="Nov", `12`="Dec")
 
-fullData_EDA_1 <- fullData_EDA %>%
-  select(-c(state,sex,age_group))
-
-fullData_EDA_1$year <- recode_factor(fullData_EDA$year, `1`="2020", `2`="2021")
-
-# fullData_EDA_2 <- fullData_EDA %>%
-#   group_by(state, sex, age_group) %>%
-#   summarise(total_deaths=sum(total_deaths),
-#             covid_19_deaths = sum(covid_19_deaths),
-#             pneumonia_deaths = sum(pneumonia_deaths),
-#             pneumonia_and_covid_19_deaths = sum(pneumonia_and_covid_19_deaths),
-#             influenza_deaths = sum(influenza_deaths),
-#             pneumonia_influenza_or_covid = sum(pneumonia_influenza_or_covid),
-#             .groups = "keep")
-
-# ggplot(fullData_EDA_2, aes(x=sex, y=total_deaths)) +
-#     geom_col(aes(fill = sex)) + coord_flip()
 
 AGE_OPTIONS <- unique(fullData$age_group)
 DEATH_COLUMN_OPTIONS <- c(
@@ -221,7 +204,8 @@ ui <- fluidPage(
       fluidRow(
         column(
           5,
-          selectInput(inputId = "var1", label = "Variable (Univariate)", choices = names(fullData_EDA_1), selected = "covid_19_deaths"),
+          selectInput(inputId = "var1", 
+                      label = "Variable (Univariate)", choices = names(fullData_EDA), selected = "covid_19_deaths"),
           checkboxInput(inputId = "log1", label = "Log_Transform?", value = FALSE, width = NULL),
           sliderInput(inputId = "bins1", label = "Bins", min = 1, max = 100, value = 50)
         ),
@@ -233,16 +217,12 @@ ui <- fluidPage(
       fluidRow(
         column(
           5,
-          selectInput("var2",label = "X Variable (Bivariate)",
-                     choices = names(fullData_EDA),
-                     selected = "pneumonia_deaths"),
+          selectInput("var2",label = "X Variable (Bivariate)",choices = names(fullData_EDA),selected = "pneumonia_deaths"),
           checkboxInput("log2", "Log_Transform?", value = FALSE, width = NULL),
-          selectInput("var3",label = "Y Variable (Bivariate)",
-                     choices = names(fullData_EDA),
-                     selected = "covid_19_deaths"),
+          selectInput("var3",label = "Y Variable (Bivariate)", choices = names(fullData_EDA),selected = "covid_19_deaths"),
           checkboxInput("log3", "Log_Transform?", value = FALSE, width = NULL),
           varSelectInput(inputId = "color1",label = "color", data = fullData_color,selected = "age_group"),
-          checkboxInput("ols1", "Trendline", value = FALSE, width = NULL)
+          checkboxInput("trend1", "Trendline", value = FALSE, width = NULL)
         ),
         column(
           7,
@@ -463,42 +443,51 @@ server <- function(input, output, session) {
   })
 
   output$plot1 <- renderPlot({
-
-    if (is.numeric(fullData_EDA_1[,input$var1])) {
-
+    
+    if (is.numeric(fullData_EDA[,input$var1])) {
+      
       if(!input$log1)
       {
-        ggplot(fullData_EDA_1, aes(x = .data[[input$var1]])) +
-          geom_histogram(bins = input$bins1,aes(fill=..count..), show.legend = FALSE) +
-          scale_fill_gradient("Count", low="green", high="red")
+        ggplot(fullData_EDA, aes(x = .data[[input$var1]])) +
+          geom_histogram(bins = input$bins1,aes(fill=..count..), show.legend = TRUE) +
+          scale_fill_gradient("Count", low="green", high="red") +
+          theme_minimal()
       }
       else
       {
-        ggplot(fullData_EDA_1, aes(x = .data[[input$var1]]))+
-          geom_histogram(bins = input$bins1,aes(fill=..count..), show.legend = FALSE) +
+        ggplot(fullData_EDA, aes(x = .data[[input$var1]]))+
+          geom_histogram(bins = input$bins1,aes(fill=..count..), show.legend = TRUE) +
           scale_x_log10() +
-          scale_fill_gradient("Count", low="green", high="red")
+          scale_fill_gradient("Count", low="green", high="red") +
+          theme_minimal()
       }
     }
-
+    
     else if (input$var1 == "state" || input$var1 == "age_group") {
-      ggplot(fullData_EDA_1, aes(x = .data[[input$var1]])) +
-        geom_bar(aes(fill=..count..), show.legend = FALSE) +
-        coord_flip() +
-        scale_fill_gradient("Count", low="darkgreen", high="darkred")
+      ggplot(fullData_EDA, aes(x = .data[[input$var1]])) +
+        geom_bar(aes(fill=..count..), show.legend = TRUE) +
+        scale_fill_gradient("Count", low="darkgreen", high="darkred") +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 45))  
     }
     else {
-      ggplot(fullData_EDA_1, aes(x = .data[[input$var1]])) +
-        geom_bar(aes(fill=..count..), show.legend = FALSE) +
-        scale_fill_gradient("Count", low="darkgreen", high="darkred")
+      ggplot(fullData_EDA, aes(x = .data[[input$var1]])) +
+        geom_bar(aes(fill=..count..), show.legend = TRUE) +
+        scale_fill_gradient("Count", low="darkgreen", high="darkred") +
+        theme_minimal()
     }
   })
 
   output$plot2 <- renderPlot({
-
+    # validate(
+    #   need(input$log2 != TRUE, "Cannot log a non-numeric variable, 
+    #        please de-select the log transformation or select a numeric variable for X Variable (Bivariate) to log.")
+    # ) # cannot log a non-numeric variable, please select a numeric variable.
+    
     if (is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
       p2 <- ggplot(fullData_EDA, aes(x = .data[[input$var2]], y = .data[[input$var3]])) +
-        geom_point(aes(color = !!input$color1))
+        geom_point(aes(color = !!input$color1), show.legend = TRUE) +
+        theme_minimal()
       if(!input$log2 && !input$log3)
       {
         p2
@@ -518,8 +507,8 @@ server <- function(input, output, session) {
         p2<- p2 + scale_x_log10() + scale_y_log10()
         p2
       }
-
-      if(input$ols1)
+      
+      if(input$trend1)
       {
         p2 <- p2 +geom_smooth(method='loess', formula = y~x, se=FALSE)
         p2
@@ -528,38 +517,52 @@ server <- function(input, output, session) {
       {
         p2
       }
-
+      
     }
     else if (input$var2 == "state" || input$var2 == "age_group") {
-      p3 <- ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-        geom_boxplot(aes(color = .data[[input$var2]]), show.legend = FALSE)
+      p3 <- ggplot(fullData_EDA, 
+                   aes(x=.data[[input$var2]], 
+                       y=.data[[input$var3]])) +
+        geom_boxplot(aes(color = .data[[input$var2]]), 
+                     show.legend = TRUE) +
+        theme_minimal() + 
+        theme(axis.text.x = element_text(angle = 45))
       if (!is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
         if (!input$log2 && !input$log3) {
-          p3 + coord_flip()
+          p3 
         }
         else if (!input$log2 && input$log3) {
-          p3 + scale_y_log10() + coord_flip()
+          p3 + scale_y_log10() 
         }
         else if (input$log2 && !input$log3) {
-          # validate(): cannot log a non-numeric variable, please select a numeric variable.
-          p3 + coord_flip()
+          p3
         }
         else if (input$log2 && input$log3) {
           # validate(): cannot log a non-numeric variable, please select a numeric variable.
-          p3 + scale_y_log10() + coord_flip()
+          p3 + scale_y_log10()
         }
       }
       else if (!is.numeric(fullData_EDA[,input$var2])&&!is.numeric(fullData_EDA[,input$var3])) {
-        ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-          geom_jitter() + coord_flip()
+        ggplot(fullData_EDA, 
+               aes(x=.data[[input$var2]], 
+                   y=.data[[input$var3]])) +
+          geom_jitter(aes(color = !!input$color1), 
+                      show.legend = TRUE) + 
+          theme_minimal() +
+          theme(axis.text.x = element_text(angle = 45)) 
+        
         # Issue: when age_group and state are on the x-axis, illegible.
         # Consider validate() to warn against plotting age_group vs state.
         # Add code for log transformations and add validate(): can't transform non-numerics, please select a numeric variable.
       }
     }
     else if (input$var2 != "state" || input$var2 != "age_group"){
-      p3 <- ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-        geom_boxplot(aes(color = .data[[input$var2]]), show.legend = FALSE)
+      p3 <- ggplot(fullData_EDA, 
+                   aes(x=.data[[input$var2]], 
+                       y=.data[[input$var3]])) +
+        geom_boxplot(aes(color = .data[[input$var2]]), 
+                     show.legend = TRUE) + 
+        theme_minimal()
       if (!is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
         if (!input$log2 && input$log3) {
           p3 + scale_y_log10()
@@ -578,37 +581,47 @@ server <- function(input, output, session) {
       }
       else if (!is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
         ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-          geom_boxplot()
+          geom_boxplot(aes(color = .data[[input$var2]]), show.legend = TRUE) + theme_minimal()
       }
       else if (!is.numeric(fullData_EDA[,input$var2])&&!is.numeric(fullData_EDA[,input$var3])) {
         ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-          geom_jitter()
+          geom_jitter(aes(color = !!input$color1), show.legend = TRUE) + 
+          theme_minimal()
       }
       else if (is.numeric(fullData_EDA[,input$var2])&&!is.numeric(fullData_EDA[,input$var3])) {
-        p3 <- ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-          geom_boxplot(aes(color = .data[[input$var2]]), show.legend = FALSE)
+        p3 <- ggplot(fullData_EDA, 
+                     aes(x=.data[[input$var2]], 
+                         y=.data[[input$var3]])) + 
+          ggstance::geom_boxploth(aes(color = .data[[input$var3]]), 
+                                  show.legend = TRUE) + 
+          theme_minimal()
+        
         if (input$log2 && !input$log3){
-          p3 + scale_x_log10() + ggstance::geom_boxploth()
+          p3 + scale_x_log10() 
         }
         else if (!input$log2 && input$log3){
           # validate(): cannot log a non-numeric variable, please select a numeric variable.
-          p3 + ggstance::geom_boxploth()
+          p3 
         }
         else if (input$log2 && input$log3){
           # validate(): cannot log a non-numeric variable, please select a numeric variable.
-          p3 + scale_x_log10() + ggstance::geom_boxploth()
+          p3 + scale_x_log10() 
         }
         else if (!input$log2 && !input$log3){
-          p3 + ggstance::geom_boxploth()
+          p3 
         }
       }
       else if (is.numeric(fullData_EDA[,input$var2])&&!is.numeric(fullData_EDA[,input$var3])) {
-        ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-          geom_boxplot() + ggstance::geom_boxploth()
+        ggplot(fullData_EDA, 
+               aes(x=.data[[input$var2]], 
+                   y=.data[[input$var3]]))  + 
+          ggstance::geom_boxploth(aes(color = .data[[input$var3]]), 
+                                  show.legend = TRUE) + 
+          theme_minimal()
       }
     }
   })
-
+  
   # varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
   # varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions")
   output$plot <- renderPlot({
