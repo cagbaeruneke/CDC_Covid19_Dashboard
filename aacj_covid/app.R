@@ -669,76 +669,115 @@ server <- function(input, output, session) {
     }
   })
   
-  # Build new df
-  
-  tib <- reactive({
-    new.df <- tibble(!!input$option1, !!input$option2, !!input$option3, !!input$option4, !!input$option5)
-    new.df
+  # Create a new df from the test data
+  output$view <- renderTable({
+    new.df() %>%
+      sample_n(1, replace = TRUE)
+    
   })
+  
+  new.df <- reactive({
+    new_data %>%
+      filter(current_status == input$option3 &
+               sex == input$option4 &
+               age_group == input$option5 &
+               race_ethnicity_combined == input$option6 &
+               medcond_yn == input$option7) 
+  }) 
+  
+  
   
   # Activate action button
-  risk <- eventReactive(input$option7, {
+  
+  risk <- eventReactive(input$option9, {
     
-    if (input$option6 == "Death") {
-      death_pred <- predict(train_death_model, new.df, type = "response")
+    if (input$option8 == "Death") {
+      death_pred <- predict(train_death_model, new.df(), type = "response")
       death_pred
-    } else if (input$option6 == "Hospital") {
-      hosp_pred <- predict(train_hosp_model, new.df, type = "response")
+      
+    } else if (input$option8 == "Hospital") {
+      hosp_pred <- predict(train_hosp_model, new.df(), type = "response")
       hosp_pred
-    } else if (input$option6 == "ICU") {
-      icu_pred <- predict(train_icu_model, new.df, type = "response")
+    } else if (input$option8 == "ICU") {
+      icu_pred <- predict(train_icu_model, new.df(), type = "response")
       icu_pred
     }
+    
   })
-  
   
   # Select model
   output$Chances <- renderText({
     
-    risk()
+    risk()[[1]]
   })
   
-  #   # Generate Performance Metrics - Pseudo-r2 - McFadden
-  output$pseudo_r2 <- renderText({
-    if (input$option6 == "Death") {
+  loglik <- eventReactive(input$option9, { 
+    
+    # Generate Performance Metrics - Pseudo-r2 - McFadden
+    # output$pseudo_r2 <- renderText({
+    if (input$option8 == "Death") {
       death_model_pr2
-    } else if (input$option6 == "Hospital") {
+    } else if (input$option8 == "Hospital") {
       hosp_model_pr2
-    } else if (input$option6 == "ICU") {
+    } else if (input$option8 == "ICU") {
       icu_model_pr2
     }
+  })  
+  # }) 
+  
+  # See performance
+  output$pseudo_r2 <- renderText({
     
+    loglik()
   })
-  #   
+  
   #   # Generate Confusion Matrix
-  output$Conf_Mat <- renderPrint({
-    if (input$option6 == "Death") {
+  conMatrx <- eventReactive(input$option9, {
+    
+    # output$Conf_Mat <- renderPrint({
+    if (input$option8 == "Death") {
       death_conMat
-    } else if (input$option6 == "Hospital") {
+    } else if (input$option8 == "Hospital") {
       hosp_conMat
-    } else if (input$option6 == "ICU") {
+    } else if (input$option8 == "ICU") {
       icu_conMat
     }
     
   })
   
+  # See matrix
+  output$Conf_Mat <- renderPrint({
+    
+    conMatrx()
+  })
+  
+  
   #   # Generate AUC plot
-  output$rocPlot <- renderPlot({
-    if (input$option6 == "Death") {
+  rocCurve <- eventReactive(input$option9, {
+    
+    # output$rocPlot <- renderPlot({
+    if (input$option8 == "Death") {
       ROCR::prediction(test_death_pred, model_test$death_yn) %>%
         ROCR::performance(measure = "tpr", x.measure = "fpr") %>%
         plot()
-    } else if (input$option6 == "Hospital") {
+    } else if (input$option8 == "Hospital") {
       ROCR::prediction(test_hosp_pred, model_test$hosp_yn) %>%
         ROCR::performance(measure = "tpr", x.measure = "fpr") %>%
         plot()
-    } else if (input$option6 == "ICU") {
+    } else if (input$option8 == "ICU") {
       ROCR::prediction(test_icu_pred, model_test$icu_yn) %>%
         ROCR::performance(measure = "tpr", x.measure = "fpr") %>%
         plot()
     }
     
   })
+  
+  # See ROC Curve
+  output$rocPlot <- renderPlot({
+    
+    rocCurve()
+  })
+
 
   output$spreadsheet1 <- renderDataTable({
     fullData
