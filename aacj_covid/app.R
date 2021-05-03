@@ -181,7 +181,7 @@ covid_surveillance %>%
 library(rsample)
 set.seed(123)
 # Create a split object
-modeldf_split <- rsample::initial_split(covid_surveillance_data, prop = 0.70)
+modeldf_split <- rsample::initial_split(covid_surveillance, prop = 0.70)
 # Build training data set
 model_training <- modeldf_split %>% 
   training()
