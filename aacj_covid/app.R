@@ -217,6 +217,10 @@ icu_conMat = table(model_test$icu_yn, test_icu_pred > 0.5) %>% prop.table() %>% 
 # hosp_pred <- predict(train_hosp_model, new.df, type = "response")
 # icu_pred <- predict(train_icu_model, new.df, type = "response")
 
+# New df 
+new_data <- covid_surveillance_data %>%
+  select(-death_yn, -hosp_yn, -icu_yn) 
+
 ui <- fluidPage(
   titlePanel("ACCJ COVID-19 Shiny App"),
   tabsetPanel(
