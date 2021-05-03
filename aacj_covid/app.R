@@ -338,8 +338,17 @@ ui <- fluidPage(
         ),
         column(
           7,
+          h4("Statistical Modeling with COVID-19 Data"),
+          br(),
+          br(),
+          h4("User Profile"),
           tableOutput("view"),
-          plotOutput("rocPlot")
+          plotOutput("rocPlot"),
+          br(),
+          br(),
+          helpText("Disclaimer: The information in this app is intended solely for the academic use of the user
+                          who accepts full responsibility for its use. While we have put much effort into ensuring that the content is both relevant and insightful,
+                          we are not responsible for the results obtained from the use of this information!"),
         )
       )
     ),
