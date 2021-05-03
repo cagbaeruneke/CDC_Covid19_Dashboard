@@ -282,13 +282,13 @@ ui <- fluidPage(
       fluidRow(
         column(5,
                sidebarPanel(
-                 selectizeInput('option1', 'Gender', choices = levels(covid_surveillance_data$sex)),
-                 selectizeInput('option2', 'Age Group', choices = levels(covid_surveillance_data$age_group)),
-                 selectizeInput('option3', 'Race/Ethnicity', choices = levels(covid_surveillance_data$race_ethnicity_combined)),
-                 selectizeInput('option4', 'Status', choices = levels(covid_surveillance_data$current_status)),
-                 selectizeInput('option5', 'Medical Condition', choices = levels(covid_surveillance_data$medcond_yn)),
-                 radioButtons('option6', 'Risk Models', choices = c("Death", "Hospital", "ICU"), selected = "Death"),
-                 actionButton('option7', 'Risk', icon = icon("bullseye"), class = "btn-success"),
+                 selectizeInput('option3', 'Gender', choices = levels(covid_surveillance$sex)),
+                 selectizeInput('option4', 'Age Group', choices = levels(covid_surveillance$age_group)),
+                 selectizeInput('option5', 'Race/Ethnicity', choices = levels(covid_surveillance$race_ethnicity_combined)),
+                 selectizeInput('option6', 'Status', choices = levels(covid_surveillance$current_status)),
+                 selectizeInput('option7', 'Medical Condition', choices = levels(covid_surveillance$medcond_yn)),
+                 radioButtons('option8', 'Risk Models', choices = c("Death", "Hospital", "ICU"), selected = "Death"),
+                 actionButton('option9', 'Risk', icon = icon("bullseye"), class = "btn-success"),
                  p("Click here to run risk model"),
                  br(),
                  br(),
@@ -307,7 +307,8 @@ ui <- fluidPage(
         ),
         column(7,
                mainPanel(
-                 plotOutput("rocPlot"),
+                 tableOutput("view"),
+                 plotOutput("rocPlot")
                  
                )
         )
