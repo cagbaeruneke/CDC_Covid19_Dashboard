@@ -38,6 +38,11 @@ The purpose of this app is to provide available COVID-19 data and present in a w
 * `ggrepel==0.9.1`
 * `ggstance==0.3.5`
 * `lubridate==1.7.10`
+* `pscl`
+* `recipes`
+* `ROCR`
+* `rsample`
+* `themis`
 
 
 ## Data sources
