@@ -138,7 +138,7 @@ pre_conditions_data <- read_csv("../data/conditions.csv") %>%
   filter(group == "By Month",
          !age_group == "Not stated",
          !age_group == "All Ages") %>%
-  select(-c(group,data_as_of))
+  select(-c(group,data_as_of,number_of_mentions))
 
 # Surveillance data
 covid_surveillance_data <- read_csv("../data/covid_surveillance_df.rds") %>%
