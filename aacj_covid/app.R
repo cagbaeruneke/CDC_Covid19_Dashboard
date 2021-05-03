@@ -138,12 +138,22 @@ pre_conditions_data <- read_csv("../data/conditions.csv") %>%
   filter(group == "By Month",
          !age_group == "Not stated",
          !age_group == "All Ages") %>%
-  select(-c(group,data_as_of))
+  select(-c(group,data_as_of,number_of_mentions))
 
 # Surveillance data
 covid_surveillance_data <- read_csv("../data/covid_surveillance_df.rds") %>%
   as_tibble() %>%
-  mutate_at(vars(current_status:medcond_yn), as_factor)
+  mutate_at(vars(current_status:medcond_yn), as_factor) %>%
+  mutate(age_group = factor(age_group, levels = c("0 - 9 Years", "10 - 19 Years", "20 - 29 Years", "30 - 39 Years",
+                                                  "40 - 49 Years", "50 - 59 Years", "60 - 69 Years", "70 - 79 Years",
+                                                  "80+ Years")),
+         race_ethnicity_combined = factor(race_ethnicity_combined, levels = c("American Indian/Alaska Native, Non-Hispanic",
+                                                                              "Asian, Non-Hispanic",
+                                                                              "Black, Non-Hispanic",
+                                                                              "Hispanic/Latino",
+                                                                              "Native Hawaiian/Other Pacific Islander, Non-Hispanic",
+                                                                              "Multiple/Other, Non-Hispanic",
+                                                                              "White, Non-Hispanic")))
 
 # Create recipe to up sample imbalanced variables
 covid_surveillance <- recipes::recipe(~., data = covid_surveillance_data) %>%
@@ -196,9 +206,9 @@ icu_conMat = table(model_test$icu_yn, test_icu_pred > 0.5) %>% prop.table() %>% 
 # hosp_pred <- predict(train_hosp_model, new.df, type = "response")
 # icu_pred <- predict(train_icu_model, new.df, type = "response")
 
-# New df 
+# New df
 new_data <- covid_surveillance_data %>%
-  select(-death_yn, -hosp_yn, -icu_yn) 
+  select(-death_yn, -hosp_yn, -icu_yn)
 
 ui <- fluidPage(
   titlePanel("ACCJ COVID-19 Shiny App"),
@@ -276,7 +286,7 @@ ui <- fluidPage(
             varSelectInput("ccolor1",label = "color", data = covid_surveillance_data, selected = "medcond_yn"),
             checkboxInput("ctrend1", "Trendline", value = FALSE, width = NULL)
           ),
-          helpText("Note: cannot log a non-numeric variable,", 
+          helpText("Note: cannot log a non-numeric variable,",
                    "please select a numeric variable,",
                    "if available.")
         ),
@@ -328,8 +338,17 @@ ui <- fluidPage(
         ),
         column(
           7,
+          h4("Statistical Modeling with COVID-19 Data"),
+          br(),
+          br(),
+          h4("User Profile"),
           tableOutput("view"),
-          plotOutput("rocPlot")
+          plotOutput("rocPlot"),
+          br(),
+          br(),
+          helpText("Disclaimer: The information in this app is intended solely for the academic use of the user
+                          who accepts full responsibility for its use. While we have put much effort into ensuring that the content is both relevant and insightful,
+                          we are not responsible for the results obtained from the use of this information!"),
         )
       )
     ),
@@ -501,11 +520,11 @@ server <- function(input, output, session) {
   })
 
   output$plot1 <- renderPlot({
-    
+
     if (input$dataset == "Death Counts"){
-      
+
       if (is.numeric(fullData_EDA[,input$var1])) {
-        
+
         if(!input$log1)
         {
           ggplot(fullData_EDA, aes(x = .data[[input$var1]])) +
@@ -522,13 +541,13 @@ server <- function(input, output, session) {
             theme_minimal()
         }
       }
-      
+
       else if (input$var1 == "state" || input$var1 == "age_group") {
         ggplot(fullData_EDA, aes(x = .data[[input$var1]])) +
           geom_bar(aes(fill=..count..), show.legend = TRUE) +
           scale_fill_gradient("Count", low="darkgreen", high="darkred") +
           theme_minimal() +
-          theme(axis.text.x = element_text(angle = 45))  
+          theme(axis.text.x = element_text(angle = 45))
       }
       else {
         ggplot(fullData_EDA, aes(x = .data[[input$var1]])) +
@@ -538,9 +557,9 @@ server <- function(input, output, session) {
       }
     }
     else if (input$dataset == "Preconditions"){
-      
+
       if (is.numeric(pre_conditions_data[,input$bvar1])) {
-        
+
         if(!input$blog1)
         {
           ggplot(pre_conditions_data, aes(x = .data[[input$bvar1]])) +
@@ -557,13 +576,13 @@ server <- function(input, output, session) {
             theme_minimal()
         }
       }
-      
+
       else if (input$bvar1 == "state" || input$bvar1 == "age_group" || input$bvar1 == "condition" || input$bvar1 == "condition_group") {
         ggplot(pre_conditions_data, aes(x = .data[[input$bvar1]])) +
           geom_bar(aes(fill=..count..), show.legend = TRUE) +
           scale_fill_gradient("Count", low="darkgreen", high="darkred") +
           theme_minimal() +
-          theme(axis.text.x = element_text(angle = 45))  
+          theme(axis.text.x = element_text(angle = 45))
       }
       else {
         ggplot(pre_conditions_data, aes(x = .data[[input$bvar1]])) +
@@ -573,9 +592,9 @@ server <- function(input, output, session) {
       }
     }
     else if (input$dataset == "Surveillance"){
-      
+
       if (is.numeric(covid_surveillance_data[,input$cvar1])) {
-        
+
         if(!input$clog1)
         {
           ggplot(covid_surveillance_data, aes(x = .data[[input$cvar1]])) +
@@ -592,13 +611,13 @@ server <- function(input, output, session) {
             theme_minimal()
         }
       }
-      
+
       else if (input$cvar1 == "state" || input$cvar1 == "age_group" || input$cvar1 == "race_ethnicity_combined") {
         ggplot(covid_surveillance_data, aes(x = .data[[input$cvar1]])) +
           geom_bar(aes(fill=..count..), show.legend = TRUE) +
           scale_fill_gradient("Count", low="darkgreen", high="darkred") +
           theme_minimal() +
-          theme(axis.text.x = element_text(angle = 45))  
+          theme(axis.text.x = element_text(angle = 45))
       }
       else {
         ggplot(covid_surveillance_data, aes(x = .data[[input$cvar1]])) +
@@ -610,9 +629,9 @@ server <- function(input, output, session) {
   })
 
   output$plot2 <- renderPlot({
-    
+
     if (input$dataset == "Death Counts"){
-      
+
       if (is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
         p2 <- ggplot(fullData_EDA, aes(x = .data[[input$var2]], y = .data[[input$var3]])) +
           geom_point(aes(color = !!input$color1), show.legend = TRUE) +
@@ -636,7 +655,7 @@ server <- function(input, output, session) {
           p2<- p2 + scale_x_log10() + scale_y_log10()
           p2
         }
-        
+
         if(input$trend1)
         {
           p2 <- p2 +geom_smooth(method='loess', formula = y~x, se=FALSE)
@@ -646,59 +665,59 @@ server <- function(input, output, session) {
         {
           p2
         }
-        
+
       }
       else if (input$var2 == "state" || input$var2 == "age_group") {
-        p3 <- ggplot(fullData_EDA, 
-                     aes(x=.data[[input$var2]], 
+        p3 <- ggplot(fullData_EDA,
+                     aes(x=.data[[input$var2]],
                          y=.data[[input$var3]])) +
-          geom_boxplot(aes(color = .data[[input$var2]]), 
+          geom_boxplot(aes(color = .data[[input$var2]]),
                        show.legend = TRUE) +
-          theme_minimal() + 
+          theme_minimal() +
           theme(axis.text.x = element_text(angle = 45))
         if (!is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
           if (!input$log2 && !input$log3) {
-            p3 
+            p3
           }
           else if (!input$log2 && input$log3) {
-            p3 + scale_y_log10() 
+            p3 + scale_y_log10()
           }
           else if (input$log2 && !input$log3) {
             p3
           }
           else if (input$log2 && input$log3) {
-            
+
             p3 + scale_y_log10()
           }
         }
         else if (!is.numeric(fullData_EDA[,input$var2])&&!is.numeric(fullData_EDA[,input$var3])) {
-          ggplot(fullData_EDA, 
-                 aes(x=.data[[input$var2]], 
+          ggplot(fullData_EDA,
+                 aes(x=.data[[input$var2]],
                      y=.data[[input$var3]])) +
-            geom_jitter(aes(color = !!input$color1), 
-                        show.legend = TRUE) + 
+            geom_jitter(aes(color = !!input$color1),
+                        show.legend = TRUE) +
             theme_minimal() +
-            theme(axis.text.x = element_text(angle = 45)) 
-          
+            theme(axis.text.x = element_text(angle = 45))
+
         }
       }
       else if (input$var2 != "state" || input$var2 != "age_group"){
-        p3 <- ggplot(fullData_EDA, 
-                     aes(x=.data[[input$var2]], 
+        p3 <- ggplot(fullData_EDA,
+                     aes(x=.data[[input$var2]],
                          y=.data[[input$var3]])) +
-          geom_boxplot(aes(color = .data[[input$var2]]), 
-                       show.legend = TRUE) + 
+          geom_boxplot(aes(color = .data[[input$var2]]),
+                       show.legend = TRUE) +
           theme_minimal()
         if (!is.numeric(fullData_EDA[,input$var2])&&is.numeric(fullData_EDA[,input$var3])) {
           if (!input$log2 && input$log3) {
             p3 + scale_y_log10()
           }
           else if (input$log2 && !input$log3){
-            
+
             p3
           }
           else if (input$log2 && input$log3){
-            
+
             p3 + scale_y_log10()
           }
           else if (!input$log2 && !input$log3){
@@ -711,44 +730,44 @@ server <- function(input, output, session) {
         }
         else if (!is.numeric(fullData_EDA[,input$var2])&&!is.numeric(fullData_EDA[,input$var3])) {
           ggplot(fullData_EDA, aes(x=.data[[input$var2]], y=.data[[input$var3]])) +
-            geom_jitter(aes(color = !!input$color1), show.legend = TRUE) + 
+            geom_jitter(aes(color = !!input$color1), show.legend = TRUE) +
             theme_minimal()
         }
         else if (is.numeric(fullData_EDA[,input$var2])&&!is.numeric(fullData_EDA[,input$var3])) {
-          p3 <- ggplot(fullData_EDA, 
-                       aes(x=.data[[input$var2]], 
-                           y=.data[[input$var3]])) + 
-            ggstance::geom_boxploth(aes(color = .data[[input$var3]]), 
-                                    show.legend = TRUE) + 
+          p3 <- ggplot(fullData_EDA,
+                       aes(x=.data[[input$var2]],
+                           y=.data[[input$var3]])) +
+            ggstance::geom_boxploth(aes(color = .data[[input$var3]]),
+                                    show.legend = TRUE) +
             theme_minimal()
-          
+
           if (input$log2 && !input$log3){
-            p3 + scale_x_log10() 
+            p3 + scale_x_log10()
           }
           else if (!input$log2 && input$log3){
-            
-            p3 
+
+            p3
           }
           else if (input$log2 && input$log3){
-            
-            p3 + scale_x_log10() 
+
+            p3 + scale_x_log10()
           }
           else if (!input$log2 && !input$log3){
-            p3 
+            p3
           }
         }
         else if (is.numeric(fullData_EDA[,input$var2])&&!is.numeric(fullData_EDA[,input$var3])) {
-          ggplot(fullData_EDA, 
-                 aes(x=.data[[input$var2]], 
-                     y=.data[[input$var3]]))  + 
-            ggstance::geom_boxploth(aes(color = .data[[input$var3]]), 
-                                    show.legend = TRUE) + 
+          ggplot(fullData_EDA,
+                 aes(x=.data[[input$var2]],
+                     y=.data[[input$var3]]))  +
+            ggstance::geom_boxploth(aes(color = .data[[input$var3]]),
+                                    show.legend = TRUE) +
             theme_minimal()
         }
       }
     }
     else if (input$dataset == "Preconditions"){
-      
+
       if (is.numeric(pre_conditions_data[,input$bvar2])&&is.numeric(pre_conditions_data[,input$bvar3])) {
         p4 <- ggplot(pre_conditions_data, aes(x = .data[[input$bvar2]], y = .data[[input$bvar3]])) +
           geom_point(aes(color = !!input$bcolor1), show.legend = TRUE) +
@@ -772,7 +791,7 @@ server <- function(input, output, session) {
           p4<- p4 + scale_x_log10() + scale_y_log10()
           p4
         }
-        
+
         if(input$btrend1)
         {
           p4 <- p4 +geom_smooth(method='loess', formula = y~x, se=FALSE)
@@ -782,59 +801,59 @@ server <- function(input, output, session) {
         {
           p4
         }
-        
+
       }
       else if (input$bvar2 == "state" || input$bvar2 == "age_group" || input$bvar2 == "condition" || input$bvar2 == "condition_group") {
-        p5 <- ggplot(pre_conditions_data, 
-                     aes(x=.data[[input$bvar2]], 
+        p5 <- ggplot(pre_conditions_data,
+                     aes(x=.data[[input$bvar2]],
                          y=.data[[input$bvar3]])) +
-          geom_boxplot(aes(color = .data[[input$bvar2]]), 
+          geom_boxplot(aes(color = .data[[input$bvar2]]),
                        show.legend = TRUE) +
-          theme_minimal() + 
+          theme_minimal() +
           theme(axis.text.x = element_text(angle = 45))
         if (!is.numeric(pre_conditions_data[,input$bvar2])&&is.numeric(pre_conditions_data[,input$bvar3])) {
           if (!input$blog2 && !input$blog3) {
-            p5 
+            p5
           }
           else if (!input$blog2 && input$blog3) {
-            p5 + scale_y_log10() 
+            p5 + scale_y_log10()
           }
           else if (input$blog2 && !input$blog3) {
             p5
           }
           else if (input$blog2 && input$blog3) {
-            
+
             p5 + scale_y_log10()
           }
         }
         else if (!is.numeric(pre_conditions_data[,input$bvar2])&&!is.numeric(pre_conditions_data[,input$bvar3])) {
-          ggplot(pre_conditions_data, 
-                 aes(x=.data[[input$bvar2]], 
+          ggplot(pre_conditions_data,
+                 aes(x=.data[[input$bvar2]],
                      y=.data[[input$bvar3]])) +
-            geom_jitter(aes(color = !!input$bcolor1), 
-                        show.legend = TRUE) + 
+            geom_jitter(aes(color = !!input$bcolor1),
+                        show.legend = TRUE) +
             theme_minimal() +
-            theme(axis.text.x = element_text(angle = 45)) 
-          
+            theme(axis.text.x = element_text(angle = 45))
+
         }
       }
       else if (input$bvar2 != "state" || input$bvar2 != "age_group" || input$bvar2 != "condition" || input$bvar2 != "condition_group"){
-        p5 <- ggplot(pre_conditions_data, 
-                     aes(x=.data[[input$bvar2]], 
+        p5 <- ggplot(pre_conditions_data,
+                     aes(x=.data[[input$bvar2]],
                          y=.data[[input$bvar3]])) +
-          geom_boxplot(aes(color = .data[[input$bvar2]]), 
-                       show.legend = TRUE) + 
+          geom_boxplot(aes(color = .data[[input$bvar2]]),
+                       show.legend = TRUE) +
           theme_minimal()
         if (!is.numeric(pre_conditions_data[,input$bvar2])&&is.numeric(pre_conditions_data[,input$bvar3])) {
           if (!input$blog2 && input$blog3) {
             p5 + scale_y_log10()
           }
           else if (input$blog2 && !input$blog3){
-            
+
             p5
           }
           else if (input$blog2 && input$blog3){
-            
+
             p5 + scale_y_log10()
           }
           else if (!input$blog2 && !input$blog3){
@@ -847,44 +866,44 @@ server <- function(input, output, session) {
         }
         else if (!is.numeric(pre_conditions_data[,input$bvar2])&&!is.numeric(pre_conditions_data[,input$bvar3])) {
           ggplot(pre_conditions_data, aes(x=.data[[input$bvar2]], y=.data[[input$bvar3]])) +
-            geom_jitter(aes(color = !!input$bcolor1), show.legend = TRUE) + 
+            geom_jitter(aes(color = !!input$bcolor1), show.legend = TRUE) +
             theme_minimal()
         }
         else if (is.numeric(pre_conditions_data[,input$bvar2])&&!is.numeric(pre_conditions_data[,input$bvar3])) {
-          p5 <- ggplot(pre_conditions_data, 
-                       aes(x=.data[[input$bvar2]], 
-                           y=.data[[input$bvar3]])) + 
-            ggstance::geom_boxploth(aes(color = .data[[input$bvar3]]), 
-                                    show.legend = TRUE) + 
+          p5 <- ggplot(pre_conditions_data,
+                       aes(x=.data[[input$bvar2]],
+                           y=.data[[input$bvar3]])) +
+            ggstance::geom_boxploth(aes(color = .data[[input$bvar3]]),
+                                    show.legend = TRUE) +
             theme_minimal()
-          
+
           if (input$blog2 && !input$blog3){
-            p5 + scale_x_log10() 
+            p5 + scale_x_log10()
           }
           else if (!input$blog2 && input$blog3){
-            
-            p5 
+
+            p5
           }
           else if (input$blog2 && input$blog3){
-            
-            p5 + scale_x_log10() 
+
+            p5 + scale_x_log10()
           }
           else if (!input$blog2 && !input$blog3){
-            p5 
+            p5
           }
         }
         else if (is.numeric(pre_conditions_data[,input$bvar2])&&!is.numeric(pre_conditions_data[,input$bvar3])) {
-          ggplot(pre_conditions_data, 
-                 aes(x=.data[[input$bvar2]], 
-                     y=.data[[input$bvar3]]))  + 
-            ggstance::geom_boxploth(aes(color = .data[[input$bvar3]]), 
-                                    show.legend = TRUE) + 
+          ggplot(pre_conditions_data,
+                 aes(x=.data[[input$bvar2]],
+                     y=.data[[input$bvar3]]))  +
+            ggstance::geom_boxploth(aes(color = .data[[input$bvar3]]),
+                                    show.legend = TRUE) +
             theme_minimal()
         }
       }
     }
     else if (input$dataset == "Surveillance"){
-      
+
       if (is.numeric(covid_surveillance_data[,input$cvar2])&&is.numeric(covid_surveillance_data[,input$cvar3])) {
         p6 <- ggplot(covid_surveillance_data, aes(x = .data[[input$cvar2]], y = .data[[input$cvar3]])) +
           geom_point(aes(color = !!input$ccolor1), show.legend = TRUE) +
@@ -908,7 +927,7 @@ server <- function(input, output, session) {
           p6<- p6 + scale_x_log10() + scale_y_log10()
           p6
         }
-        
+
         if(input$ctrend1)
         {
           p6 <- p6 +geom_smooth(method='loess', formula = y~x, se=FALSE)
@@ -918,59 +937,59 @@ server <- function(input, output, session) {
         {
           p6
         }
-        
+
       }
       else if (input$cvar2 == "state" || input$cvar2 == "age_group" || input$cvar2 == "race_ethnicity_combined") {
-        p7 <- ggplot(covid_surveillance_data, 
-                     aes(x=.data[[input$cvar2]], 
+        p7 <- ggplot(covid_surveillance_data,
+                     aes(x=.data[[input$cvar2]],
                          y=.data[[input$cvar3]])) +
-          geom_boxplot(aes(color = .data[[input$cvar2]]), 
+          geom_boxplot(aes(color = .data[[input$cvar2]]),
                        show.legend = TRUE) +
-          theme_minimal() + 
+          theme_minimal() +
           theme(axis.text.x = element_text(angle = 45))
         if (!is.numeric(covid_surveillance_data[,input$cvar2])&&is.numeric(covid_surveillance_data[,input$cvar3])) {
           if (!input$clog2 && !input$clog3) {
-            p7 
+            p7
           }
           else if (!input$clog2 && input$clog3) {
-            p7 + scale_y_log10() 
+            p7 + scale_y_log10()
           }
           else if (input$clog2 && !input$clog3) {
             p7
           }
           else if (input$clog2 && input$clog3) {
-            
+
             p7 + scale_y_log10()
           }
         }
         else if (!is.numeric(covid_surveillance_data[,input$cvar2])&&!is.numeric(covid_surveillance_data[,input$cvar3])) {
-          ggplot(covid_surveillance_data, 
-                 aes(x=.data[[input$cvar2]], 
+          ggplot(covid_surveillance_data,
+                 aes(x=.data[[input$cvar2]],
                      y=.data[[input$cvar3]])) +
-            geom_jitter(aes(color = !!input$ccolor1), 
-                        show.legend = TRUE) + 
+            geom_jitter(aes(color = !!input$ccolor1),
+                        show.legend = TRUE) +
             theme_minimal() +
-            theme(axis.text.x = element_text(angle = 45)) 
-          
+            theme(axis.text.x = element_text(angle = 45))
+
         }
       }
       else if (input$cvar2 != "state" || input$cvar2 != "age_group" || input$cvar2 != "race_ethnicity_combined"){
-        p7 <- ggplot(covid_surveillance_data, 
-                     aes(x=.data[[input$cvar2]], 
+        p7 <- ggplot(covid_surveillance_data,
+                     aes(x=.data[[input$cvar2]],
                          y=.data[[input$cvar3]])) +
-          geom_boxplot(aes(color = .data[[input$cvar2]]), 
-                       show.legend = TRUE) + 
+          geom_boxplot(aes(color = .data[[input$cvar2]]),
+                       show.legend = TRUE) +
           theme_minimal()
         if (!is.numeric(covid_surveillance_data[,input$cvar2])&&is.numeric(covid_surveillance_data[,input$cvar3])) {
           if (!input$clog2 && input$clog3) {
             p7 + scale_y_log10()
           }
           else if (input$clog2 && !input$clog3){
-            
+
             p7
           }
           else if (input$clog2 && input$clog3){
-            
+
             p7 + scale_y_log10()
           }
           else if (!input$clog2 && !input$clog3){
@@ -983,44 +1002,44 @@ server <- function(input, output, session) {
         }
         else if (!is.numeric(covid_surveillance_data[,input$cvar2])&&!is.numeric(covid_surveillance_data[,input$cvar3])) {
           ggplot(covid_surveillance_data, aes(x=.data[[input$cvar2]], y=.data[[input$cvar3]])) +
-            geom_jitter(aes(color = !!input$ccolor1), show.legend = TRUE) + 
+            geom_jitter(aes(color = !!input$ccolor1), show.legend = TRUE) +
             theme_minimal()
         }
         else if (is.numeric(covid_surveillance_data[,input$cvar2])&&!is.numeric(covid_surveillance_data[,input$cvar3])) {
-          p7 <- ggplot(covid_surveillance_data, 
-                       aes(x=.data[[input$cvar2]], 
-                           y=.data[[input$cvar3]])) + 
-            ggstance::geom_boxploth(aes(color = .data[[input$cvar3]]), 
-                                    show.legend = TRUE) + 
+          p7 <- ggplot(covid_surveillance_data,
+                       aes(x=.data[[input$cvar2]],
+                           y=.data[[input$cvar3]])) +
+            ggstance::geom_boxploth(aes(color = .data[[input$cvar3]]),
+                                    show.legend = TRUE) +
             theme_minimal()
-          
+
           if (input$clog2 && !input$clog3){
-            p7 + scale_x_log10() 
+            p7 + scale_x_log10()
           }
           else if (!input$clog2 && input$clog3){
-            
-            p7 
+
+            p7
           }
           else if (input$clog2 && input$clog3){
-            
-            p7 + scale_x_log10() 
+
+            p7 + scale_x_log10()
           }
           else if (!input$clog2 && !input$clog3){
-            p7 
+            p7
           }
         }
         else if (is.numeric(covid_surveillance_data[,input$cvar2])&&!is.numeric(covid_surveillance_data[,input$cvar3])) {
-          ggplot(covid_surveillance_data, 
-                 aes(x=.data[[input$cvar2]], 
-                     y=.data[[input$cvar3]]))  + 
-            ggstance::geom_boxploth(aes(color = .data[[input$cvar3]]), 
-                                    show.legend = TRUE) + 
+          ggplot(covid_surveillance_data,
+                 aes(x=.data[[input$cvar2]],
+                     y=.data[[input$cvar3]]))  +
+            ggstance::geom_boxploth(aes(color = .data[[input$cvar3]]),
+                                    show.legend = TRUE) +
             theme_minimal()
         }
       }
     }
   })
-  
+
   # varSelectInput("option1", "X Variable:", data = pre_conditions_data %>% select_if(is.numeric), selected = "covid_19_deaths"),
   # varSelectInput("option2", "Y Variable:", data = pre_conditions_data %>% select_if(is.factor), selected = "conditions")
   output$plot <- renderPlot({
@@ -1031,62 +1050,62 @@ server <- function(input, output, session) {
         ggplot(aes(x = !!input$option1, y = !!input$option2, fill = age_group)) +
         geom_bar(stat = "identity", show.legend = FALSE) +
         scale_x_log10() +
-        scale_fill_brewer(palette = "Blues") + 
+        scale_fill_brewer(palette = "Blues") +
         theme_gray()
-        
+
     } else if (!!input$option2 == "state") {
       pre_conditions_data %>%
         group_by(state) %>%
         summarise(covid19_deaths = sum(covid_19_deaths)) %>%
         mutate(state = fct_reorder(state, covid19_deaths)) %>%
         ggplot(aes(covid19_deaths, state, fill = covid19_deaths)) +
-        geom_bar(stat = "identity", show.legend = FALSE) 
-       
+        geom_bar(stat = "identity", show.legend = FALSE)
+
     } else if (!!input$option2 == "condition") {
       pre_conditions_data %>%
         group_by(condition) %>%
         summarise(covid19_deaths = sum(covid_19_deaths)) %>%
         mutate(condition = fct_reorder(condition, covid19_deaths)) %>%
         ggplot(aes(covid19_deaths, condition, fill = covid19_deaths)) +
-        geom_bar(stat = "identity", show.legend = FALSE) 
-        
+        geom_bar(stat = "identity", show.legend = FALSE)
+
     } else if (!!input$option2 == "condition_group") {
       pre_conditions_data %>%
         group_by(condition_group) %>%
         summarise(covid19_deaths = sum(covid_19_deaths)) %>%
         mutate(condition_group = fct_reorder(condition_group, covid19_deaths)) %>%
         ggplot(aes(covid19_deaths, condition_group, fill = covid19_deaths)) +
-        geom_bar(stat = "identity", show.legend = FALSE) 
-        
+        geom_bar(stat = "identity", show.legend = FALSE)
+
     }
   })
-  
+
   # Create a new df from the test data
   output$view <- renderTable({
     new.df() %>%
       sample_n(1, replace = TRUE)
-    
+
   })
-  
+
   new.df <- reactive({
     new_data %>%
       filter(current_status == input$option3 &
                sex == input$option4 &
                age_group == input$option5 &
                race_ethnicity_combined == input$option6 &
-               medcond_yn == input$option7) 
-  }) 
-  
-  
-  
+               medcond_yn == input$option7)
+  })
+
+
+
   # Activate action button
-  
+
   risk <- eventReactive(input$option9, {
-    
+
     if (input$option8 == "Death") {
       death_pred <- predict(train_death_model, new.df(), type = "response")
       death_pred
-      
+
     } else if (input$option8 == "Hospital") {
       hosp_pred <- predict(train_hosp_model, new.df(), type = "response")
       hosp_pred
@@ -1094,17 +1113,17 @@ server <- function(input, output, session) {
       icu_pred <- predict(train_icu_model, new.df(), type = "response")
       icu_pred
     }
-    
+
   })
-  
+
   # Select model
   output$Chances <- renderText({
-    
+
     risk()[[1]]
   })
-  
-  loglik <- eventReactive(input$option9, { 
-    
+
+  loglik <- eventReactive(input$option9, {
+
     # Generate Performance Metrics - Pseudo-r2 - McFadden
     # output$pseudo_r2 <- renderText({
     if (input$option8 == "Death") {
@@ -1114,18 +1133,18 @@ server <- function(input, output, session) {
     } else if (input$option8 == "ICU") {
       icu_model_pr2
     }
-  })  
-  # }) 
-  
+  })
+  # })
+
   # See performance
   output$pseudo_r2 <- renderText({
-    
+
     loglik()
   })
-  
+
   #   # Generate Confusion Matrix
   conMatrx <- eventReactive(input$option9, {
-    
+
     # output$Conf_Mat <- renderPrint({
     if (input$option8 == "Death") {
       death_conMat
@@ -1136,16 +1155,16 @@ server <- function(input, output, session) {
     }
 
   })
-  
+
   # See matrix
   output$Conf_Mat <- renderPrint({
-    
+
     conMatrx()
   })
-  
+
   #   # Generate AUC plot
   rocCurve <- eventReactive(input$option9, {
-    
+
     # output$rocPlot <- renderPlot({
     if (input$option8 == "Death") {
       ROCR::prediction(test_death_pred, model_test$death_yn) %>%
@@ -1162,10 +1181,10 @@ server <- function(input, output, session) {
     }
 
   })
-  
+
   # See ROC Curve
   output$rocPlot <- renderPlot({
-    
+
     rocCurve()
   })
 
