@@ -58,9 +58,10 @@ All data is from [https://data.cdc.gov](data.cdc.gov), the open data portal of t
 
 ### Provisional COVID-19 Death Counts by Sex, Age, and State
 
-This data set contains rows organized around three different groupings: "By Total", "By Year", and "By Month". Within each of these, data is broken down by state, sex, and age group. For each of state, sex, and age group, there are also "All States", "All Sexes", and "All Age Group" categories.
+* This data set contains rows organized around three different groupings: "By Total", "By Year", and "By Month". Within each of these, data is broken down by state, sex, and age group. For each of state, sex, and age group, there are also "All States", "All Sexes", and "All Age Group" categories.
 
 Each row contains:
+
 * An as-of date for the dataset
 * A start date and end date
 * Columns for the aforementioned grouping, state, sex, and age group categories
@@ -75,58 +76,101 @@ Rows corresponding to the "By Year" or "By Month" groupings also contain year or
 
 ### Case Surveillance Public Use Data
 
-This case surveillance public use dataset has 12 elements for all COVID-19 cases shared with CDC and includes demographics, any exposure history, disease severity indicators and outcomes, presence of any underlying medical conditions and risk behaviors, and no geographic data.
+* This case surveillance public use dataset has 12 elements for all COVID-19 cases shared with CDC and includes demographics, any exposure history, disease severity indicators and outcomes, presence of any underlying medical conditions and risk behaviors, and no geographic data.
 
-The COVID-19 case surveillance database includes individual-level data reported to U.S. states and autonomous reporting entities, including New York City and the District of Columbia (D.C.), as well as U.S. territories and affiliates. On April 5, 2020, COVID-19 was added to the Nationally Notifiable Condition List and classified as “immediately notifiable, urgent (within 24 hours)” by a Council of State and Territorial Epidemiologists (CSTE) Interim Position Statement (Interim-20-ID-01). CSTE updated the position statement on August 5, 2020 to clarify the interpretation of antigen detection tests and serologic test results within the case classification. The statement also recommended that all states and territories enact laws to make COVID-19 reportable in their jurisdiction, and that jurisdictions conducting surveillance should submit case notifications to CDC. COVID-19 case surveillance data are collected by jurisdictions and reported voluntarily to CDC.
+* The COVID-19 case surveillance database includes individual-level data reported to U.S. states and autonomous reporting entities, including New York City and the District of Columbia (D.C.), as well as U.S. territories and affiliates. On April 5, 2020, COVID-19 was added to the Nationally Notifiable Condition List and classified as “immediately notifiable, urgent (within 24 hours)” by a Council of State and Territorial Epidemiologists (CSTE) Interim Position Statement (Interim-20-ID-01). CSTE updated the position statement on August 5, 2020 to clarify the interpretation of antigen detection tests and serologic test results within the case classification. The statement also recommended that all states and territories enact laws to make COVID-19 reportable in their jurisdiction, and that jurisdictions conducting surveillance should submit case notifications to CDC. COVID-19 case surveillance data are collected by jurisdictions and reported voluntarily to CDC.
 
-Each row contains:
-* current_status: Case Status (Case Report Form: What is the current status of this person?) -- Values: Laboratory-confirmed case; Probable case; Please see latest CSTE case definition for more information.
-* sex: Sex (Case Report Form): Male; Female; Unknown; Other; Missing; NA
-* age_group: Age Group: 0 - 9 Years; 10 - 19 Years; 20 - 39 Years; 40 - 49 Years; 50 - 59 Years; 60 - 69 Years; 70 - 79 Years; 80 + Years; Missing; NA; The age group categorizations were populated using the age value that was reported on the case report form. Date of birth was used to fill in missing/unknown age values using the difference in time between date of birth and onset date.
-* race_ethnicity_combined: Race and ethnicity (combined): American Indian/Alaska Native, Non-Hispanic; Asian, Non-Hispanic; Black, Non-Hispanic; Multiple/Other, Non-Hispanic; Native Hawaiian/Other Pacific Islander, Non-Hispanic; White, Non-Hispanic; Hispanic/Latino; Unknown; Missing; NA. If more than race was reported, race was categorized into multiple/other races.
-* hosp_yn: Hospitalization status (Case Report Form: Was the patient hospitalized?) -- Values: Yes; No; Unknown; Missing;
-* icu_yn:ICU admission status (Case Report Form: Was the patient admitted to an intensive care unit (ICU)?) -- Values: Yes; No; Unknown; Missing;
-* death_yn: Death status (Case Report Form: Did the patient die as a result of this illness?) -- Values: Yes; No; Unknown; Missing;
-* medcond_yn: Presence of underlying comorbidity or disease (Case Report Form: Pre-existing medical conditions?) -- Values: Yes; No; Unknown; Missing;
+* Each row contains:
+
+  * current_status: Case Status (Case Report Form: What is the current status of this person?) -- Values: Laboratory-confirmed case; Probable case; Please see latest CSTE case definition for more information.
+  * sex: Sex (Case Report Form): Male; Female; Unknown; Other; Missing; NA
+  * age_group: Age Group: 0 - 9 Years; 10 - 19 Years; 20 - 39 Years; 40 - 49 Years; 50 - 59 Years; 60 - 69 Years; 70 - 79 Years; 80 + Years; Missing; NA; The age group categorizations were populated using the age value that was reported on the case report form. Date of birth was used to fill in missing/unknown age values using the difference in time between date of birth and onset date.
+  * race_ethnicity_combined: Race and ethnicity (combined): American Indian/Alaska Native, Non-Hispanic; Asian, Non-Hispanic; Black, Non-Hispanic; Multiple/Other, Non-Hispanic; Native Hawaiian/Other Pacific Islander, Non-Hispanic; White, Non-Hispanic; Hispanic/Latino; Unknown; Missing; NA. If more than race was reported, race was categorized into multiple/other races.
+  * hosp_yn: Hospitalization status (Case Report Form: Was the patient hospitalized?) -- Values: Yes; No; Unknown; Missing;
+  * icu_yn:ICU admission status (Case Report Form: Was the patient admitted to an intensive care unit (ICU)?) -- Values: Yes; No; Unknown; Missing;
+  * death_yn: Death status (Case Report Form: Did the patient die as a result of this illness?) -- Values: Yes; No; Unknown; Missing;
+  * medcond_yn: Presence of underlying comorbidity or disease (Case Report Form: Pre-existing medical conditions?) -- Values: Yes; No; Unknown; Missing;
 
 ### Conditions contributing to deaths involving coronavirus disease 2019 (COVID-19), by age group and state, United States.
 
-This dataset shows health conditions and contributing causes mentioned in conjunction with deaths involving coronavirus disease 2019 (COVID-19).
+* This dataset shows health conditions and contributing causes mentioned in conjunction with deaths involving coronavirus disease 2019 (COVID-19).
 
-Starting December 23, 2020, the data file will also include the number of deaths that mention the listed conditions. The new column, “COVID-19 Deaths” represents the number of deaths that mention one or more of the conditions indicated. The data's existing “Number of Mentions” column represents the number of total conditions mentioned for each age group.
+* Starting December 23, 2020, the data file will also include the number of deaths that mention the listed conditions. The new column, “COVID-19 Deaths” represents the number of deaths that mention one or more of the conditions indicated. The data's existing “Number of Mentions” column represents the number of total conditions mentioned for each age group.
 
-Each row contains:
-* date_as_of: Date of Analysis
-* start_date: First week-ending date of data period 
-* end_date: Last week-ending date of data period
-* group: Time-period indicator for record: by Month, by Year, Total
-* year: Year in which death occurred
-* month: Month in which death occurred
-* state: Jurisdiction of occurrence
-* condition_group: Condition Group
-* condition: Condition contributing to deaths involving COVID-19
-* age_group: Age group
-* covid_19_deaths: COVID 19 Deaths
-* number_of_mentions: Number of mentions
+* Each row contains:
 
-Number of conditions reported in this table are tabulated from deaths received and coded as of the date of analysis and do not represent all deaths that occurred in that period. Data during this period are incomplete because of the lag in time between when the death occurred and when the death certificate is completed, submitted to NCHS and processed for reporting purposes. This delay can range from 1 week to 8 weeks or more. Conditions contributing to the death were identified using the International Classification of Diseases, Tenth Revision (ICD-10). Deaths involving more than one condition (e.g., deaths involving both diabetes and respiratory arrest) were counted in both totals. To avoid counting the same death multiple times, the numbers for different conditions should not be summated. Deaths with confirmed or presumed COVID-19, coded to ICD–10 code U07.1
+  * date_as_of: Date of Analysis
+  * start_date: First week-ending date of data period 
+  * end_date: Last week-ending date of data period
+  * group: Time-period indicator for record: by Month, by Year, Total
+  * year: Year in which death occurred
+  * month: Month in which death occurred
+  * state: Jurisdiction of occurrence
+  * condition_group: Condition Group
+  * condition: Condition contributing to deaths involving COVID-19
+  * age_group: Age group
+  * covid_19_deaths: COVID 19 Deaths
+  * number_of_mentions: Number of mentions
+
+* Number of conditions reported in this table are tabulated from deaths received and coded as of the date of analysis and do not represent all deaths that occurred in that period. Data during this period are incomplete because of the lag in time between when the death occurred and when the death certificate is completed, submitted to NCHS and processed for reporting purposes. This delay can range from 1 week to 8 weeks or more. Conditions contributing to the death were identified using the International Classification of Diseases, Tenth Revision (ICD-10). Deaths involving more than one condition (e.g., deaths involving both diabetes and respiratory arrest) were counted in both totals. To avoid counting the same death multiple times, the numbers for different conditions should not be summated. Deaths with confirmed or presumed COVID-19, coded to ICD–10 code U07.1
 
 ## EDA walkthrough
 
-[inputs, controls, and outputs]
-[Briefly walks through the Use Case describing how to solve the problem and interpret results]
+Use Case
 
+* Since the outbreak of COVID-19, the development of web applications as dynamic, visual tools for communicating COVID-19 data has surged worldwide. Web applications can inform decision-making and support behavior change. To do so, the tool must be insightful and actionable. The functionality presented in the exploratory data analysis equips users with the ability to visually analyze the relationship and patterns within the data to understand the implications of COVID-19 within various demographics and geographical locations.
 
+Inputs and Outputs
 
+* The application allows users to select from three datasets referred to as Death Counts, Preconditions, and Surveillance.
+*	Upon selecting the dataset of interest, the subsequent input field options for both univariate and multivariate analysis update.
+
+* The Variable (Univariate) field allows users to select a single variable from the listed options from within the currently selected dataset.
+  *	The resulting visual output to the right of this field is the Univariate Graph.
+    *	Various conditional arguments are used to allow the graph to distinguish between the selection of variables because all available variables are either classified as numeric or non-numeric.
+    *	If a numeric variable is selected the resulting output is a histogram, otherwise a bar chart.
+      *	When the resulting output is a histogram, users have the option to employ a log transformation.
+      *	Log transformations may be used to transform skewed data to approximately conform to normality (as apparent upon selection of a numeric variable).
+      
+*	The Variable (Multivariate) fields allow users to select an X and a Y variable from the listed options from within the currently selected dataset.
+  *	The resulting visual output to the right of this field is the Multivariate Graph.
+    *	Various conditional arguments are used to allow the graph to distinguish between the selection of variables because all available variables are either classified as numeric or non-numeric.
+    *	If two numeric variables are selected, the resulting graph is a scatter plot. If one selected variable is non-numeric and the other is numeric, the resulting graph is a boxplot. Otherwise, if two non-numeric variables are selected, the resulting graph is a jitter plot.
+      *	An additional feature in this section is color.
+        *	The resulting colors are associated with the respective levels of the selected categorical variable.
+
+Controls
+
+* Bins
+  *	Users have the option to control the number of bins of the corresponding Univariate Graph.
+  *	Changing the bins, the data gets grouped differently. The different grouping affects the appearance of the histogram.
+    *	Avoid histograms with large bin widths that group data into only a few bins. A histogram constructed with large bin widths will show the distribution as a “skyscraper.” This does not give good information about variability in the distribution.
+    *	Avoid histograms with small bin widths that group data into lots of bins. A histogram constructed with small bin widths will show the distribution as a “pancake.” This does not help visualize the pattern in the data.
+    
+* Log Transformation
+  *	When the original continuous data do not follow the bell curve, log transform the variable to make it as “normal” as possible so that the statistical analysis results from the data become more valid. In other words, the log transformation reduces or removes the skewness of the original data. The important caveat here is that the original data must follow or approximately follow a log-normal distribution. Otherwise, the log transformation will not work.
+  
+*	Trendline
+  * When plotting two continuous variables users may employ a LOESS line.
+  *	This tool is used in regression analysis to create a smooth line through a scatter plot to help highlight a relationship between variables and foresee trends.
+
+* Color
+  *	Breakdown by tertiary categorical variable highlighted by colors.
+  *	For a third variable that indicates categorical values (like geographical region or gender), the most common encoding is through point color. Giving each point a distinct hue makes it easy to show membership of each point to a respective group.
+  
 ## Statistical analysis walkthrough
 
-[inputs, controls, and outputs]
-[Briefly Walks through the Use Case describing how to solve the problem and interpret results]
+* In the modeling tab, we have created an option for users to check their risk or likelihood of death, needing medical attention and/or being admitted to the intensive Care Unit  if they are exposed to COVID given the current trend using historical data.  We have built 3 different models to select from.
 
+* Users will have to select one option from all 5 fields and then select a specific Risk Model to generate Probable risk with Exposure.
+
+* We included 3 features to gauge performance of the underlying models that generate this probability. These include:
+
+  * McFadden’s Log Likelihood
+  * Confusion Matrix
+  * ROC Curve
 
 ## References
-
-[At least three relevant to the App]
 
 * Ivanković, Damir, et al. “Features Constituting Actionable COVID-19 Dashboards: Descriptive Assessment and Expert Appraisal of 158 Public Web-Based COVID-19 Dashboards.” Journal of Medical Internet Research, vol. 23, no. 2, 2021, doi:10.2196/25682. 
 * Tebé, Cristian, et al. “COVID19-World: a Shiny Application to Perform Comprehensive Country-Specific Data Visualization for SARS-CoV-2 Epidemic.” BMC Medical Research Methodology, vol. 20, no. 1, 21 Sept. 2020, doi:10.1186/s12874-020-01121-9. 
