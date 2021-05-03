@@ -136,8 +136,9 @@ pre_conditions_data <- read_csv("../data/conditions.csv") %>%
   mutate_at(vars(group:age_group), as_factor) %>%
   mutate_at(vars(covid_19_deaths, number_of_mentions), as.numeric) %>%
   filter(group == "By Month",
-         !age_group == "Not stated") %>%
-  select(-group)
+         !age_group == "Not stated",
+         !age_group == "All Ages") %>%
+  select(-c(group,data_as_of))
 
 # Surveillance data
 covid_surveillance_data <- read_csv("../data/covid_surveillance_df.rds") %>%
@@ -216,13 +217,13 @@ ui <- fluidPage(
           ),
           conditionalPanel(
             'input.dataset == "Preconditions"',
-            selectInput(inputId = "bvar1", label = "Variable (Univariate)", choices = names(pre_conditions_data)),
+            selectInput(inputId = "bvar1", label = "Variable (Univariate)", choices = names(pre_conditions_data), selected = "condition_group"),
             checkboxInput(inputId = "blog1", label = "Log_Transform?", value = FALSE, width = NULL),
             sliderInput(inputId = "bbins1", label = "Bins", min = 1, max = 100, value = 50)
           ),
           conditionalPanel(
             'input.dataset == "Surveillance"',
-            selectInput(inputId = "cvar1", label = "Variable (Univariate)", choices = names(covid_surveillance_data)),
+            selectInput(inputId = "cvar1", label = "Variable (Univariate)", choices = names(covid_surveillance_data), selected = "race_ethnicity_combined"),
             checkboxInput(inputId = "clog1", label = "Log_Transform?", value = FALSE, width = NULL),
             sliderInput(inputId = "cbins1", label = "Bins", min = 1, max = 100, value = 50)
           )
@@ -252,23 +253,27 @@ ui <- fluidPage(
           conditionalPanel(
             'input.dataset == "Preconditions"',
             selectInput("bvar2",label = "X Variable (Multivariate)",
-                        choices = names(pre_conditions_data)),
+                        choices = names(pre_conditions_data),
+                        selected = "age_group"),
             checkboxInput("blog2", "Log_Transform?", value = FALSE, width = NULL),
             selectInput("bvar3",label = "Y Variable (Multivariate)",
-                        choices = names(pre_conditions_data)),
+                        choices = names(pre_conditions_data),
+                        selected = "condition_group"),
             checkboxInput("blog3", "Log_Transform?", value = FALSE, width = NULL),
-            varSelectInput("bcolor1",label = "color", data = pre_conditions_data),
+            varSelectInput("bcolor1",label = "color", data = pre_conditions_data,selected = "age_group"),
             checkboxInput("btrend1", "Trendline", value = FALSE, width = NULL)
           ),
           conditionalPanel(
             'input.dataset == "Surveillance"',
             selectInput("cvar2",label = "X Variable (Multivariate)",
-                        choices = names(covid_surveillance_data)),
+                        choices = names(covid_surveillance_data),
+                        selected = "death_yn"),
             checkboxInput("clog2", "Log_Transform?", value = FALSE, width = NULL),
             selectInput("cvar3",label = "Y Variable (Multivariate)",
-                        choices = names(covid_surveillance_data)),
+                        choices = names(covid_surveillance_data),
+                        selected = "race_ethnicity_combined"),
             checkboxInput("clog3", "Log_Transform?", value = FALSE, width = NULL),
-            varSelectInput("ccolor1",label = "color", data = covid_surveillance_data),
+            varSelectInput("ccolor1",label = "color", data = covid_surveillance_data, selected = "medcond_yn"),
             checkboxInput("ctrend1", "Trendline", value = FALSE, width = NULL)
           ),
           helpText("Note: cannot log a non-numeric variable,", 
@@ -588,7 +593,7 @@ server <- function(input, output, session) {
         }
       }
       
-      else if (input$cvar1 == "state" || input$cvar1 == "age_group" || input$cvar1 == "race_ethnicity") {
+      else if (input$cvar1 == "state" || input$cvar1 == "age_group" || input$cvar1 == "race_ethnicity_combined") {
         ggplot(covid_surveillance_data, aes(x = .data[[input$cvar1]])) +
           geom_bar(aes(fill=..count..), show.legend = TRUE) +
           scale_fill_gradient("Count", low="darkgreen", high="darkred") +
@@ -915,7 +920,7 @@ server <- function(input, output, session) {
         }
         
       }
-      else if (input$cvar2 == "state" || input$cvar2 == "age_group" || input$cvar2 == "race_ethnicity") {
+      else if (input$cvar2 == "state" || input$cvar2 == "age_group" || input$cvar2 == "race_ethnicity_combined") {
         p7 <- ggplot(covid_surveillance_data, 
                      aes(x=.data[[input$cvar2]], 
                          y=.data[[input$cvar3]])) +
@@ -949,7 +954,7 @@ server <- function(input, output, session) {
           
         }
       }
-      else if (input$cvar2 != "state" || input$cvar2 != "age_group" || input$cvar2 != "race_ethnicity"){
+      else if (input$cvar2 != "state" || input$cvar2 != "age_group" || input$cvar2 != "race_ethnicity_combined"){
         p7 <- ggplot(covid_surveillance_data, 
                      aes(x=.data[[input$cvar2]], 
                          y=.data[[input$cvar3]])) +
