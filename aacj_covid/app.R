@@ -143,7 +143,17 @@ pre_conditions_data <- read_csv("../data/conditions.csv") %>%
 # Surveillance data
 covid_surveillance_data <- read_csv("../data/covid_surveillance_df.rds") %>%
   as_tibble() %>%
-  mutate_at(vars(current_status:medcond_yn), as_factor)
+  mutate_at(vars(current_status:medcond_yn), as_factor) %>%
+  mutate(age_group = factor(age_group, levels = c("0 - 9 Years", "10 - 19 Years", "20 - 29 Years", "30 - 39 Years",
+                                                  "40 - 49 Years", "50 - 59 Years", "60 - 69 Years", "70 - 79 Years",
+                                                  "80+ Years")),
+         race_ethnicity_combined = factor(race_ethnicity_combined, levels = c("American Indian/Alaska Native, Non-Hispanic",
+                                                                              "Asian, Non-Hispanic",
+                                                                              "Black, Non-Hispanic",
+                                                                              "Hispanic/Latino", 
+                                                                              "Native Hawaiian/Other Pacific Islander, Non-Hispanic",
+                                                                              "Multiple/Other, Non-Hispanic",
+                                                                              "White, Non-Hispanic")))
 
 # Create recipe to up sample imbalanced variables
 covid_surveillance <- recipes::recipe(~., data = covid_surveillance_data) %>%
