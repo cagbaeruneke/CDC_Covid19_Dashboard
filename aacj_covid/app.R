@@ -159,7 +159,7 @@ covid_surveillance %>%
 
 set.seed(123)
 # Create a split object
-modeldf_split <- rsample::initial_split(covid_surveillance_data, prop = 0.70)
+modeldf_split <- rsample::initial_split(covid_surveillance, prop = 0.70)
 # Build training data set
 model_training <- modeldf_split %>%
   training()
@@ -195,6 +195,9 @@ icu_conMat = table(model_test$icu_yn, test_icu_pred > 0.5) %>% prop.table() %>% 
 # hosp_pred <- predict(train_hosp_model, new.df, type = "response")
 # icu_pred <- predict(train_icu_model, new.df, type = "response")
 
+# New df 
+new_data <- covid_surveillance_data %>%
+  select(-death_yn, -hosp_yn, -icu_yn) 
 
 ui <- fluidPage(
   titlePanel("ACCJ COVID-19 Shiny App"),
@@ -297,13 +300,13 @@ ui <- fluidPage(
       fluidRow(
         column(
           5,
-          selectizeInput('option1', 'Gender', choices = levels(covid_surveillance_data$sex)),
-          selectizeInput('option2', 'Age Group', choices = levels(covid_surveillance_data$age_group)),
-          selectizeInput('option3', 'Race/Ethnicity', choices = levels(covid_surveillance_data$race_ethnicity_combined)),
-          selectizeInput('option4', 'Status', choices = levels(covid_surveillance_data$current_status)),
-          selectizeInput('option5', 'Medical Condition', choices = levels(covid_surveillance_data$medcond_yn)),
-          radioButtons('option6', 'Risk Models', choices = c("Death", "Hospital", "ICU"), selected = "Death"),
-          actionButton('option7', 'Risk', icon = icon("bullseye"), class = "btn-success"),
+          selectizeInput('option3', 'Status', choices = levels(covid_surveillance$current_status)),
+          selectizeInput('option4', 'Gender', choices = levels(covid_surveillance$sex)),
+          selectizeInput('option5', 'Age Group', choices = levels(covid_surveillance$age_group)),
+          selectizeInput('option6', 'Race/Ethnicity', choices = levels(covid_surveillance$race_ethnicity_combined)),
+          selectizeInput('option7', 'Medical Condition', choices = levels(covid_surveillance$medcond_yn)),
+          radioButtons('option8', 'Risk Models', choices = c("Death", "Hospital", "ICU"), selected = "Death"),
+          actionButton('option9', 'Risk', icon = icon("bullseye"), class = "btn-success"),
           p("Click here to run risk model"),
           br(),
           br(),
@@ -320,6 +323,7 @@ ui <- fluidPage(
         ),
         column(
           7,
+          tableOutput("view"),
           plotOutput("rocPlot")
         )
       )
@@ -1051,77 +1055,115 @@ server <- function(input, output, session) {
         
     }
   })
-
-  # Build new df
-
-  tib <- reactive({
-    new.df <- tibble(!!input$option1, !!input$option2, !!input$option3, !!input$option4, !!input$option5)
-    new.df
+  
+  # Create a new df from the test data
+  output$view <- renderTable({
+    new.df() %>%
+      sample_n(1, replace = TRUE)
+    
   })
-
+  
+  new.df <- reactive({
+    new_data %>%
+      filter(current_status == input$option3 &
+               sex == input$option4 &
+               age_group == input$option5 &
+               race_ethnicity_combined == input$option6 &
+               medcond_yn == input$option7) 
+  }) 
+  
+  
+  
   # Activate action button
-  risk <- eventReactive(input$option7, {
-
-    if (input$option6 == "Death") {
-      death_pred <- predict(train_death_model, new.df, type = "response")
+  
+  risk <- eventReactive(input$option9, {
+    
+    if (input$option8 == "Death") {
+      death_pred <- predict(train_death_model, new.df(), type = "response")
       death_pred
-    } else if (input$option6 == "Hospital") {
-      hosp_pred <- predict(train_hosp_model, new.df, type = "response")
+      
+    } else if (input$option8 == "Hospital") {
+      hosp_pred <- predict(train_hosp_model, new.df(), type = "response")
       hosp_pred
-    } else if (input$option6 == "ICU") {
-      icu_pred <- predict(train_icu_model, new.df, type = "response")
+    } else if (input$option8 == "ICU") {
+      icu_pred <- predict(train_icu_model, new.df(), type = "response")
       icu_pred
     }
+    
   })
-
-
+  
   # Select model
   output$Chances <- renderText({
-
-    risk()
+    
+    risk()[[1]]
   })
-
-  ## Generate Performance Metrics - Pseudo-r2 - McFadden
-  output$pseudo_r2 <- renderText({
-    if (input$option6 == "Death") {
+  
+  loglik <- eventReactive(input$option9, { 
+    
+    # Generate Performance Metrics - Pseudo-r2 - McFadden
+    # output$pseudo_r2 <- renderText({
+    if (input$option8 == "Death") {
       death_model_pr2
-    } else if (input$option6 == "Hospital") {
+    } else if (input$option8 == "Hospital") {
       hosp_model_pr2
-    } else if (input$option6 == "ICU") {
+    } else if (input$option8 == "ICU") {
       icu_model_pr2
     }
-
+  })  
+  # }) 
+  
+  # See performance
+  output$pseudo_r2 <- renderText({
+    
+    loglik()
   })
-  #
+  
   #   # Generate Confusion Matrix
-  output$Conf_Mat <- renderPrint({
-    if (input$option6 == "Death") {
+  conMatrx <- eventReactive(input$option9, {
+    
+    # output$Conf_Mat <- renderPrint({
+    if (input$option8 == "Death") {
       death_conMat
-    } else if (input$option6 == "Hospital") {
+    } else if (input$option8 == "Hospital") {
       hosp_conMat
-    } else if (input$option6 == "ICU") {
+    } else if (input$option8 == "ICU") {
       icu_conMat
     }
 
   })
-
+  
+  # See matrix
+  output$Conf_Mat <- renderPrint({
+    
+    conMatrx()
+  })
+  
   #   # Generate AUC plot
-  output$rocPlot <- renderPlot({
-    if (input$option6 == "Death") {
+  rocCurve <- eventReactive(input$option9, {
+    
+    # output$rocPlot <- renderPlot({
+    if (input$option8 == "Death") {
       ROCR::prediction(test_death_pred, model_test$death_yn) %>%
         ROCR::performance(measure = "tpr", x.measure = "fpr") %>%
         plot()
-    } else if (input$option6 == "Hospital") {
+    } else if (input$option8 == "Hospital") {
       ROCR::prediction(test_hosp_pred, model_test$hosp_yn) %>%
         ROCR::performance(measure = "tpr", x.measure = "fpr") %>%
         plot()
-    } else if (input$option6 == "ICU") {
+    } else if (input$option8 == "ICU") {
       ROCR::prediction(test_icu_pred, model_test$icu_yn) %>%
         ROCR::performance(measure = "tpr", x.measure = "fpr") %>%
         plot()
     }
 
   })
+  
+  # See ROC Curve
+  output$rocPlot <- renderPlot({
+    
+    rocCurve()
+  })
+
 
   output$spreadsheet1 <- renderDataTable({
     fullData
