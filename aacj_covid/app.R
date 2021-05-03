@@ -282,10 +282,10 @@ ui <- fluidPage(
       fluidRow(
         column(5,
                sidebarPanel(
-                 selectizeInput('option3', 'Gender', choices = levels(covid_surveillance$sex)),
-                 selectizeInput('option4', 'Age Group', choices = levels(covid_surveillance$age_group)),
-                 selectizeInput('option5', 'Race/Ethnicity', choices = levels(covid_surveillance$race_ethnicity_combined)),
-                 selectizeInput('option6', 'Status', choices = levels(covid_surveillance$current_status)),
+                 selectizeInput('option3', 'Status', choices = levels(covid_surveillance$current_status)),
+                 selectizeInput('option4', 'Gender', choices = levels(covid_surveillance$sex)),
+                 selectizeInput('option5', 'Age Group', choices = levels(covid_surveillance$age_group)),
+                 selectizeInput('option6', 'Race/Ethnicity', choices = levels(covid_surveillance$race_ethnicity_combined)),
                  selectizeInput('option7', 'Medical Condition', choices = levels(covid_surveillance$medcond_yn)),
                  radioButtons('option8', 'Risk Models', choices = c("Death", "Hospital", "ICU"), selected = "Death"),
                  actionButton('option9', 'Risk', icon = icon("bullseye"), class = "btn-success"),
