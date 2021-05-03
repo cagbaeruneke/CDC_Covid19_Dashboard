@@ -70,12 +70,21 @@ Rows corresponding to the "By Year" or "By Month" groupings also contain year or
 
 ### Case Surveillance Public Use Data
 
-[Describes the general structure of the data.]
+This case surveillance public use dataset has 12 elements for all COVID-19 cases shared with CDC and includes demographics, any exposure history, disease severity indicators and outcomes, presence of any underlying medical conditions and risk behaviors, and no geographic data.
 
+The COVID-19 case surveillance database includes individual-level data reported to U.S. states and autonomous reporting entities, including New York City and the District of Columbia (D.C.), as well as U.S. territories and affiliates. On April 5, 2020, COVID-19 was added to the Nationally Notifiable Condition List and classified as “immediately notifiable, urgent (within 24 hours)” by a Council of State and Territorial Epidemiologists (CSTE) Interim Position Statement (Interim-20-ID-01). CSTE updated the position statement on August 5, 2020 to clarify the interpretation of antigen detection tests and serologic test results within the case classification. The statement also recommended that all states and territories enact laws to make COVID-19 reportable in their jurisdiction, and that jurisdictions conducting surveillance should submit case notifications to CDC. COVID-19 case surveillance data are collected by jurisdictions and reported voluntarily to CDC.
+
+Each row contains:
+* current_status: Case Status (Case Report Form: What is the current status of this person?) -- Values: Laboratory-confirmed case; Probable case; Please see latest CSTE case definition for more information.
+* sex: Sex (Case Report Form): Male; Female; Unknown; Other; Missing; NA
+* age_group: Age Group: 0 - 9 Years; 10 - 19 Years; 20 - 39 Years; 40 - 49 Years; 50 - 59 Years; 60 - 69 Years; 70 - 79 Years; 80 + Years; Missing; NA; The age group categorizations were populated using the age value that was reported on the case report form. Date of birth was used to fill in missing/unknown age values using the difference in time between date of birth and onset date.
+* race_ethnicity_combined: Race and ethnicity (combined): American Indian/Alaska Native, Non-Hispanic; Asian, Non-Hispanic; Black, Non-Hispanic; Multiple/Other, Non-Hispanic; Native Hawaiian/Other Pacific Islander, Non-Hispanic; White, Non-Hispanic; Hispanic/Latino; Unknown; Missing; NA. If more than race was reported, race was categorized into multiple/other races.
+* hosp_yn: Hospitalization status (Case Report Form: Was the patient hospitalized?) -- Values: Yes; No; Unknown; Missing;
+* icu_yn:ICU admission status (Case Report Form: Was the patient admitted to an intensive care unit (ICU)?) -- Values: Yes; No; Unknown; Missing;
+* death_yn: Death status (Case Report Form: Did the patient die as a result of this illness?) -- Values: Yes; No; Unknown; Missing;
+* medcond_yn: Presence of underlying comorbidity or disease (Case Report Form: Pre-existing medical conditions?) -- Values: Yes; No; Unknown; Missing;
 
 ### Conditions contributing to deaths involving coronavirus disease 2019 (COVID-19), by age group and state, United States.
-
-[Describes the general structure of the data.]
 
 This dataset shows health conditions and contributing causes mentioned in conjunction with deaths involving coronavirus disease 2019 (COVID-19).
 
@@ -101,6 +110,7 @@ Number of conditions reported in this table are tabulated from deaths received a
 
 [inputs, controls, and outputs]
 [Briefly walks through the Use Case describing how to solve the problem and interpret results]
+
 
 
 ## Statistical analysis walkthrough
