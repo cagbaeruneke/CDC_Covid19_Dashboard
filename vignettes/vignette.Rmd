@@ -167,8 +167,16 @@ Controls
 * We included 3 features to gauge performance of the underlying models that generate this probability. These include:
 
   * McFadden’s Log Likelihood
+  
+    * A straightforward goodness-of-fit index used to assess the predictive capacity of the logistic regression model. It is essentially, a “pseudo R2” index developed as a logistic regression analog of R2 as used in ordinary least-squares (OLS) regression.
+    
   * Confusion Matrix
-  * ROC Curve
+  
+    * Is an N x N Matrix used for evaluating the performance of a classification model, where N is the number of target classes. The matrix compares the actual target values with those predicted by the machine learning model.
+    
+  * Receiver Operator Characteristic (ROC) curve
+  
+    * Is a graphical representation of the “true positive” and “false positive” classification rates as a function of different classification cutoff values for the predicted probabilities resulting from the logistic regression.
 
 ## References
 

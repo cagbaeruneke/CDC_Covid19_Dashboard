@@ -214,9 +214,18 @@
 <li><p>Users will have to select one option from all 5 fields and then select a specific Risk Model to generate Probable risk with Exposure.</p></li>
 <li><p>We included 3 features to gauge performance of the underlying models that generate this probability. These include:</p>
 <ul>
-<li>McFadden’s Log Likelihood</li>
-<li>Confusion Matrix</li>
-<li>ROC Curve</li>
+<li><p>McFadden’s Log Likelihood</p>
+<ul>
+<li>A straightforward goodness-of-fit index used to assess the predictive capacity of the logistic regression model. It is essentially, a “pseudo R2” index developed as a logistic regression analog of R2 as used in ordinary least-squares (OLS) regression.</li>
+</ul></li>
+<li><p>Confusion Matrix</p>
+<ul>
+<li>Is an N x N Matrix used for evaluating the performance of a classification model, where N is the number of target classes. The matrix compares the actual target values with those predicted by the machine learning model.</li>
+</ul></li>
+<li><p>Receiver Operator Characteristic (ROC) curve</p>
+<ul>
+<li>Is a graphical representation of the “true positive” and “false positive” classification rates as a function of different classification cutoff values for the predicted probabilities resulting from the logistic regression.</li>
+</ul></li>
 </ul></li>
 </ul>
 </div>
